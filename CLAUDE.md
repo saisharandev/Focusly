@@ -179,10 +179,31 @@ text-muted:    #71717A
 - Avatar upload
 
 ## Deployment (Free Tier)
-- **Frontend** → Vercel (root: `client/`)
-- **Backend** → Render (root: `server/`, start: `node index.js`)
-- **Database** → MongoDB Atlas M0
-- **Keep-alive** → UptimeRobot pings `/api/health` every 14 min (prevents Render spin-down killing Socket.IO)
+- **Frontend** → Vercel (root: `client/`) — `https://focusly-trail-s-projects.vercel.app`
+- **Backend** → Render (root: `server/`, start: `node index.js`) — `https://focusly-api-6tmg.onrender.com`
+- **Database** → MongoDB Atlas M0 — cluster `cluster0.hagpb.mongodb.net`, DB user `focusly_user`
+- **Keep-alive** → UptimeRobot pings `https://focusly-api-6tmg.onrender.com/api/health` every 5 min
+
+### Render Environment Variables
+```
+MONGO_URI  = mongodb+srv://focusly_user:<password>@cluster0.hagpb.mongodb.net/focusly?retryWrites=true&w=majority
+JWT_SECRET = focusly_super_secret_jwt_key_2026
+CLIENT_URL = <stable Vercel production URL — no trailing slash>
+PORT       = 10000
+```
+
+### Vercel Environment Variables
+```
+VITE_API_URL    = https://focusly-api-6tmg.onrender.com
+VITE_SOCKET_URL = https://focusly-api-6tmg.onrender.com
+```
+
+### Deployment Gotchas
+- `client/vercel.json` has SPA rewrite (`"/(.*)" → "/index.html"`) — required for React Router on Vercel
+- `CLIENT_URL` is `.trim()`-ed in `server/index.js` to prevent "Invalid character in header" CORS crash
+- Vercel creates a new preview URL on each push — always use the **stable production URL** from Vercel Settings → Domains for `CLIENT_URL`, not the per-deployment hash URL
+- Atlas Network Access must allow `0.0.0.0/0` — Render uses dynamic IPs
+- `Cannot GET /` on the Render URL is normal — no route at `/`, API routes are at `/api/*`
 
 ## Mongoose Models
 ### User
