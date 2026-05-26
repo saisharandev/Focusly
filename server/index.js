@@ -13,14 +13,16 @@ const analyticsRoutes = require('./routes/analytics.routes')
 const errorHandler    = require('./middleware/errorHandler')
 const initSocket      = require('./socket')
 
+const CLIENT_URL = (process.env.CLIENT_URL || '').trim()
+
 const app = express()
 const server = http.createServer(app)
 const io = new Server(server, {
-  cors: { origin: process.env.CLIENT_URL, credentials: true },
+  cors: { origin: CLIENT_URL, credentials: true },
 })
 
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }))
+app.use(cors({ origin: CLIENT_URL, credentials: true }))
 app.use(express.json())
 
 // Routes
