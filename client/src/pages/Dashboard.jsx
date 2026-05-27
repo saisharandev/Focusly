@@ -17,19 +17,22 @@ export default function Dashboard() {
   const [stats, setStats] = useState(null)
   const [weeklyData, setWeeklyData] = useState([])
   const [activeRooms, setActiveRooms] = useState([])
+  const [neglected, setNeglected] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     async function fetchAll() {
       try {
-        const [statsRes, weeklyRes, roomsRes] = await Promise.all([
+        const [statsRes, weeklyRes, roomsRes, neglectedRes] = await Promise.all([
           api.get('/api/dashboard/stats'),
           api.get('/api/analytics/weekly'),
           api.get('/api/dashboard/active-rooms'),
+          api.get('/api/subjects/neglected').catch(() => ({ data: [] })),
         ])
         setStats(statsRes.data)
         setWeeklyData(weeklyRes.data.days)
         setActiveRooms(roomsRes.data.rooms)
+        setNeglected(neglectedRes.data)
       } catch (err) {
         console.error('Dashboard fetch error:', err)
       } finally {
@@ -65,6 +68,17 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Neglected subject warning */}
+      {neglected.length > 0 && (
+        <div className="flex items-center justify-between gap-4 bg-accent-amber/10 border border-accent-amber/20 rounded-xl px-4 py-3">
+          <p className="text-sm text-accent-amber">
+            👀 You haven't touched <strong>{neglected[0].name}</strong> in{' '}
+            {Math.floor((Date.now() - new Date(neglected[0].lastUsedAt)) / 86400000)} days
+          </p>
+          <button onClick={() => setNeglected([])} className="text-text-muted hover:text-text-primary text-lg leading-none">×</button>
+        </div>
+      )}
 
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

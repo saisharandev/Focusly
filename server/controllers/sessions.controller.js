@@ -1,5 +1,6 @@
 const StudySession = require('../models/StudySession')
 const User = require('../models/User')
+const Subject = require('../models/Subject')
 const asyncHandler = require('../middleware/asyncHandler')
 const { startOfDayUTC } = require('../utils/date')
 
@@ -16,6 +17,15 @@ exports.startSession = asyncHandler(async (req, res) => {
     startedAt: new Date(),
     status: 'in_progress',
   })
+
+  // Auto-create subject if new
+  if (subject && subject !== 'General') {
+    const exists = await Subject.findOne({ userId: req.user.id, name: subject })
+    if (!exists) {
+      const color = await Subject.getNextColor(req.user.id)
+      await Subject.create({ userId: req.user.id, name: subject, color }).catch(() => {})
+    }
+  }
 
   res.status(201).json({ sessionId: session._id })
 })
@@ -57,6 +67,14 @@ exports.endSession = asyncHandler(async (req, res) => {
     user.lastStudyDate = new Date()
     user.totalStudyMinutes = (user.totalStudyMinutes || 0) + session.actualDuration
     await user.save()
+  }
+
+  // Update subject lastUsedAt on completion
+  if (session.status === 'completed' && session.subject && session.subject !== 'General') {
+    await Subject.findOneAndUpdate(
+      { userId: req.user.id, name: session.subject },
+      { lastUsedAt: new Date() }
+    )
   }
 
   res.json({ session })

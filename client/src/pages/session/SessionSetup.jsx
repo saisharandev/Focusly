@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Timer, Camera, CameraOff, Info } from 'lucide-react'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
-import Input from '../../components/ui/Input'
+import SubjectCombobox from '../../components/session/SubjectCombobox'
 
 const PRESET_DURATIONS = [25, 45, 60, 90]
 
@@ -40,12 +40,7 @@ export default function SessionSetup() {
 
       <Card className="p-6 space-y-6">
         {/* Subject */}
-        <Input
-          label="Subject"
-          placeholder="e.g. DBMS, Algorithms, Physics..."
-          value={subject}
-          onChange={e => setSubject(e.target.value)}
-        />
+        <SubjectCombobox value={subject} onChange={setSubject} />
 
         {/* Goal */}
         <div className="flex flex-col gap-1.5">
