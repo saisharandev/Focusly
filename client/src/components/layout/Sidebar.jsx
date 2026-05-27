@@ -4,15 +4,16 @@ import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import {
   LayoutDashboard, Timer, Users, BarChart3, User,
-  LogOut, Menu, X, ChevronRight,
+  LogOut, Menu, X, Trophy,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { to: '/dashboard',   label: 'Dashboard',      icon: LayoutDashboard },
-  { to: '/session/new', label: 'Focus Session',   icon: Timer },
-  { to: '/rooms',       label: 'Study Rooms',     icon: Users },
-  { to: '/analytics',   label: 'Analytics',       icon: BarChart3, soon: true },
-  { to: '/profile',     label: 'Profile',         icon: User, soon: true },
+  { to: '/dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
+  { to: '/session/new',  label: 'Focus Session', icon: Timer },
+  { to: '/rooms',        label: 'Study Rooms',  icon: Users },
+  { to: '/leaderboard',  label: 'Leaderboard',  icon: Trophy },
+  { to: '/analytics',    label: 'Analytics',    icon: BarChart3, soon: true },
+  { to: '/profile',      label: 'Profile',      icon: User, soon: true },
 ]
 
 function FocusDot({ status }) {

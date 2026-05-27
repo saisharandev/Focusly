@@ -61,6 +61,23 @@ async function handleLeave(io, socket, roomId, roomStates) {
     socket.leave(roomId)
     socket.currentRoom = null
 
+    // Track co-study relationships before removing from room
+    const roomBeforeLeave = await StudyRoom.findById(roomId).select('members')
+    if (roomBeforeLeave) {
+      const coMemberIds = roomBeforeLeave.members
+        .map(id => id.toString())
+        .filter(id => id !== socket.userId)
+      if (coMemberIds.length > 0) {
+        await User.findByIdAndUpdate(socket.userId, {
+          $addToSet: { studiedWith: { $each: coMemberIds } },
+        })
+        await User.updateMany(
+          { _id: { $in: coMemberIds } },
+          { $addToSet: { studiedWith: socket.userId } }
+        )
+      }
+    }
+
     await StudyRoom.findByIdAndUpdate(roomId, {
       $pull: { members: socket.userId },
     })

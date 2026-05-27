@@ -14,6 +14,7 @@ import SessionActive from './pages/session/SessionActive'
 import RoomsBrowse from './pages/rooms/RoomsBrowse'
 import RoomCreate from './pages/rooms/RoomCreate'
 import RoomView from './pages/rooms/RoomView'
+import Leaderboard from './pages/Leaderboard'
 
 function App() {
   return (
@@ -37,6 +38,9 @@ function App() {
             {/* Session active has its own full-screen layout */}
             <Route path="/session/active" element={
               <ProtectedRoute><SessionActive /></ProtectedRoute>
+            } />
+            <Route path="/leaderboard" element={
+              <ProtectedRoute><AppLayout><Leaderboard /></AppLayout></ProtectedRoute>
             } />
             <Route path="/rooms" element={
               <ProtectedRoute><AppLayout><RoomsBrowse /></AppLayout></ProtectedRoute>

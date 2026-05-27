@@ -10,6 +10,7 @@ const sessionRoutes   = require('./routes/sessions.routes')
 const roomRoutes      = require('./routes/rooms.routes')
 const dashboardRoutes = require('./routes/dashboard.routes')
 const analyticsRoutes = require('./routes/analytics.routes')
+const leaderboardRoutes = require('./routes/leaderboard.routes')
 const errorHandler    = require('./middleware/errorHandler')
 const initSocket      = require('./socket')
 
@@ -31,6 +32,7 @@ app.use('/api/sessions',  sessionRoutes)
 app.use('/api/rooms',     roomRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/analytics', analyticsRoutes)
+app.use('/api/leaderboard', leaderboardRoutes)
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 
