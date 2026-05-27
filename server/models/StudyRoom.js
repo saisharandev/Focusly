@@ -16,6 +16,7 @@ const roomSchema = new mongoose.Schema(
     inviteCode:  { type: String, unique: true },
     timerMode:   { type: String, enum: ['pomodoro', 'continuous'], default: 'pomodoro' },
     workDuration:{ type: Number, default: 25 }, // minutes
+    videoEnabled:{ type: Boolean, default: false },
     isActive:    { type: Boolean, default: true },
     endedAt:     { type: Date, default: null },
   },

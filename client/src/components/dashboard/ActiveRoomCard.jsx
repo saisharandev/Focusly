@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Users } from 'lucide-react'
+import { Users, Video } from 'lucide-react'
 import Card from '../ui/Card'
 import { RoomTypeBadge } from '../ui/Badge'
 
@@ -20,7 +20,10 @@ export default function ActiveRoomCard({ room }) {
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-text-primary text-sm truncate">{room.name}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="font-semibold text-text-primary text-sm truncate">{room.name}</p>
+            {room.videoEnabled && <Video size={11} className="text-accent-purple flex-shrink-0" />}
+          </div>
           {room.subjectTag && (
             <p className="text-xs text-text-muted mt-0.5">{room.subjectTag}</p>
           )}

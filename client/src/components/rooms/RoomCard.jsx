@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Users, Lock } from 'lucide-react'
+import { Users, Lock, Video } from 'lucide-react'
 import Card from '../ui/Card'
 import { RoomTypeBadge } from '../ui/Badge'
 import Button from '../ui/Button'
@@ -16,6 +16,12 @@ export default function RoomCard({ room }) {
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-text-primary truncate">{room.name}</h3>
             {!room.isPublic && <Lock size={12} className="text-text-muted flex-shrink-0" />}
+            {room.videoEnabled && (
+              <span className="flex items-center gap-1 text-[10px] font-medium text-accent-purple bg-accent-purple/10 border border-accent-purple/20 px-1.5 py-0.5 rounded-full">
+                <Video size={9} />
+                Video
+              </span>
+            )}
           </div>
           {room.subjectTag && (
             <p className="text-xs text-text-muted mt-0.5">{room.subjectTag}</p>

@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Copy, Check, Camera, CameraOff } from 'lucide-react'
+import { ArrowLeft, Copy, Check, Camera, CameraOff, Video, VideoOff, Mic, MicOff } from 'lucide-react'
 import api from '../../lib/api'
 import { useAuth } from '../../context/AuthContext'
 import { useSocket } from '../../context/SocketContext'
 import useFaceDetection from '../../hooks/useFaceDetection'
+import useWebRTC from '../../hooks/useWebRTC'
 import WebcamPreview from '../../components/session/WebcamPreview'
+import VideoGrid from '../../components/rooms/VideoGrid'
 import PomodoroTimer from '../../components/pomodoro/PomodoroTimer'
 import MemberGrid from '../../components/rooms/MemberGrid'
 import ChatPanel from '../../components/rooms/ChatPanel'
@@ -29,6 +31,11 @@ export default function RoomView() {
   const [isLoading, setIsLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [cameraEnabled, setCameraEnabled] = useState(false)
+  const [videoCallEnabled, setVideoCallEnabled] = useState(false)
+  const [localStream, setLocalStream] = useState(null)
+  const [isMicMuted, setIsMicMuted] = useState(false)
+  const [isCamMuted, setIsCamMuted] = useState(false)
+  const [videoError, setVideoError] = useState('')
   const joinTimeRef = useRef(Date.now())
   const currentRoomRef = useRef(id)
   const timerStartedAtRef = useRef(null)
@@ -44,6 +51,12 @@ export default function RoomView() {
 
   const { faceDetectedRef } = useFaceDetection(videoRef, { enabled: cameraEnabled })
   const focusStatus = !cameraEnabled ? 'untracked' : (faceDetectedRef.current ? 'focused' : 'idle')
+
+  const { remoteStreams, startVideo, stopVideo } = useWebRTC({
+    roomId: id,
+    socket,
+    enabled: videoCallEnabled,
+  })
 
   // Keep cameraEnabledRef in sync so recordRoomSession closure reads current value
   useEffect(() => { cameraEnabledRef.current = cameraEnabled }, [cameraEnabled])
@@ -99,6 +112,38 @@ export default function RoomView() {
     } catch (err) {
       console.error('Failed to record room session:', err)
     }
+  }
+
+  async function handleEnableVideo() {
+    setVideoError('')
+    try {
+      const stream = await startVideo()
+      setLocalStream(stream)
+      setVideoCallEnabled(true)
+    } catch {
+      setVideoError('Camera/mic access denied. Check browser permissions.')
+    }
+  }
+
+  function handleDisableVideo() {
+    localStream?.getTracks().forEach(t => t.stop())
+    setLocalStream(null)
+    setVideoCallEnabled(false)
+    setIsMicMuted(false)
+    setIsCamMuted(false)
+    stopVideo()
+  }
+
+  function toggleMic() {
+    if (!localStream) return
+    const track = localStream.getAudioTracks()[0]
+    if (track) { track.enabled = !track.enabled; setIsMicMuted(!track.enabled) }
+  }
+
+  function toggleCam() {
+    if (!localStream) return
+    const track = localStream.getVideoTracks()[0]
+    if (track) { track.enabled = !track.enabled; setIsCamMuted(!track.enabled) }
   }
 
   // Socket events
@@ -188,6 +233,8 @@ export default function RoomView() {
     })
 
     return () => {
+      // Stop video tracks so camera light turns off on navigation
+      localStream?.getTracks().forEach(t => t.stop())
       socket.emit('leave_room', id)
       recordRoomSession() // fire-and-forget; hasRecordedRef prevents double-recording
       socket.off('member_joined')
@@ -249,6 +296,7 @@ export default function RoomView() {
   }
 
   async function endRoom() {
+    if (videoCallEnabled) handleDisableVideo()
     await recordRoomSession()
     await api.delete(`/api/rooms/${id}`)
     socket?.emit('leave_room', id)
@@ -287,9 +335,10 @@ export default function RoomView() {
               <span className="text-xs text-text-muted hidden sm:block">{room.subjectTag}</span>
             )}
           </div>
+          {/* Focus tracking toggle */}
           <button
             onClick={() => setCameraEnabled(c => !c)}
-            title={cameraEnabled ? 'Disable camera tracking' : 'Enable camera tracking'}
+            title={cameraEnabled ? 'Disable focus tracking' : 'Enable focus tracking'}
             className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
               cameraEnabled
                 ? 'text-accent-teal border-accent-teal/40 bg-accent-teal/10'
@@ -297,8 +346,52 @@ export default function RoomView() {
             }`}
           >
             {cameraEnabled ? <Camera size={12} /> : <CameraOff size={12} />}
-            {cameraEnabled ? 'Camera on' : 'Camera off'}
+            Focus
           </button>
+
+          {/* Video call controls — only for video rooms */}
+          {room?.videoEnabled && !videoCallEnabled && (
+            <button
+              onClick={handleEnableVideo}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-accent-purple/40 bg-accent-purple/10 text-accent-purple hover:bg-accent-purple/20 transition-colors"
+            >
+              <Video size={12} />
+              Join Video
+            </button>
+          )}
+          {room?.videoEnabled && videoCallEnabled && (
+            <>
+              <button
+                onClick={toggleMic}
+                title={isMicMuted ? 'Unmute mic' : 'Mute mic'}
+                className={`p-1.5 rounded-lg border transition-colors ${
+                  isMicMuted
+                    ? 'text-accent-red border-accent-red/40 bg-accent-red/10'
+                    : 'text-text-muted border-white/10 hover:text-text-primary'
+                }`}
+              >
+                {isMicMuted ? <MicOff size={13} /> : <Mic size={13} />}
+              </button>
+              <button
+                onClick={toggleCam}
+                title={isCamMuted ? 'Turn on camera' : 'Turn off camera'}
+                className={`p-1.5 rounded-lg border transition-colors ${
+                  isCamMuted
+                    ? 'text-accent-red border-accent-red/40 bg-accent-red/10'
+                    : 'text-text-muted border-white/10 hover:text-text-primary'
+                }`}
+              >
+                {isCamMuted ? <VideoOff size={13} /> : <Video size={13} />}
+              </button>
+              <button
+                onClick={handleDisableVideo}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-accent-red/40 bg-accent-red/10 text-accent-red hover:bg-accent-red/20 transition-colors"
+              >
+                <VideoOff size={12} />
+                Leave Video
+              </button>
+            </>
+          )}
           <button
             onClick={copyInvite}
             className="flex items-center gap-1.5 text-xs text-text-muted hover:text-accent-teal transition-colors px-3 py-1.5 rounded-lg border border-white/10 hover:border-accent-teal/40"
@@ -338,6 +431,41 @@ export default function RoomView() {
               onSkip={() => socket?.emit('timer:skip', { roomId: id })}
             />
           </div>
+
+          {/* Video Grid — shown when this is a video room and at least one person has joined video */}
+          {room.videoEnabled && (localStream || Object.keys(remoteStreams).length > 0) && (
+            <div>
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
+                Video Call
+              </p>
+              <VideoGrid
+                localStream={localStream}
+                localCamOff={isCamMuted}
+                localMicMuted={isMicMuted}
+                remoteStreams={remoteStreams}
+                members={members}
+                currentUserId={user?._id}
+              />
+            </div>
+          )}
+
+          {/* Video error */}
+          {videoError && (
+            <p className="text-xs text-accent-red bg-accent-red/10 border border-accent-red/20 rounded-xl px-4 py-2">
+              {videoError}
+            </p>
+          )}
+
+          {/* Video room prompt — shown when no one has video on yet */}
+          {room.videoEnabled && !localStream && Object.keys(remoteStreams).length === 0 && (
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-accent-purple/5 border border-accent-purple/20">
+              <Video size={18} className="text-accent-purple flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-text-primary">Video room</p>
+                <p className="text-xs text-text-muted">Click "Join Video" in the header to enable your camera and mic.</p>
+              </div>
+            </div>
+          )}
 
           {/* Members */}
           <div>

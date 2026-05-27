@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Users, Video } from 'lucide-react'
 import api from '../../lib/api'
 import Card from '../../components/ui/Card'
 import Input from '../../components/ui/Input'
@@ -15,6 +16,7 @@ const ROOM_TYPES = [
 
 export default function RoomCreate() {
   const navigate = useNavigate()
+  const [videoEnabled, setVideoEnabled] = useState(false)
   const [form, setForm] = useState({
     name: '', type: 'general', subjectTag: '',
     isPublic: true, maxMembers: 6,
@@ -27,12 +29,19 @@ export default function RoomCreate() {
     setForm(f => ({ ...f, [key]: value }))
   }
 
+  function toggleVideoMode(enabled) {
+    setVideoEnabled(enabled)
+    if (enabled && form.maxMembers > 4) {
+      set('maxMembers', 4)
+    }
+  }
+
   async function handleCreate() {
     if (!form.name.trim()) { setError('Room name is required'); return }
     setIsLoading(true)
     setError('')
     try {
-      const res = await api.post('/api/rooms', form)
+      const res = await api.post('/api/rooms', { ...form, videoEnabled })
       navigate(`/rooms/${res.data.room._id}`)
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create room')
@@ -53,6 +62,42 @@ export default function RoomCreate() {
             {error}
           </div>
         )}
+
+        {/* Room Mode selector */}
+        <div>
+          <label className="text-sm font-medium text-text-secondary mb-2 block">Room Mode</label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => toggleVideoMode(false)}
+              className={`flex flex-col items-center gap-2 py-4 px-3 rounded-xl border transition-all ${
+                !videoEnabled
+                  ? 'bg-accent-teal/10 border-accent-teal/40 text-accent-teal'
+                  : 'bg-bg-card border-white/10 text-text-secondary hover:border-white/20'
+              }`}
+            >
+              <Users size={22} />
+              <span className="text-sm font-semibold">Study Room</span>
+              <span className="text-xs opacity-70 text-center">Text chat + focus tracking</span>
+            </button>
+            <button
+              onClick={() => toggleVideoMode(true)}
+              className={`flex flex-col items-center gap-2 py-4 px-3 rounded-xl border transition-all ${
+                videoEnabled
+                  ? 'bg-accent-purple/10 border-accent-purple/40 text-accent-purple'
+                  : 'bg-bg-card border-white/10 text-text-secondary hover:border-white/20'
+              }`}
+            >
+              <Video size={22} />
+              <span className="text-sm font-semibold">Video Room</span>
+              <span className="text-xs opacity-70 text-center">Live video for up to 4 people</span>
+            </button>
+          </div>
+          {videoEnabled && (
+            <p className="text-xs text-accent-purple mt-2 px-1">
+              📹 Video rooms use WebRTC peer-to-peer — no video is stored or sent to our servers.
+            </p>
+          )}
+        </div>
 
         <Input label="Room Name" placeholder="e.g. DSA Grind Session" value={form.name} onChange={e => set('name', e.target.value)} />
         <Input label="Subject Tag" placeholder="e.g. DBMS, Algorithms" value={form.subjectTag} onChange={e => set('subjectTag', e.target.value)} />
@@ -97,13 +142,15 @@ export default function RoomCreate() {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-text-secondary mb-2 block">Max Members</label>
+            <label className="text-sm font-medium text-text-secondary mb-2 block">
+              Max Members {videoEnabled && <span className="text-accent-purple">(max 4 for video)</span>}
+            </label>
             <select
               value={form.maxMembers}
               onChange={e => set('maxMembers', Number(e.target.value))}
               className="w-full bg-bg-card border border-white/10 rounded-xl px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-teal"
             >
-              {[2, 3, 4, 5, 6, 8, 10].map(n => (
+              {(videoEnabled ? [2, 3, 4] : [2, 3, 4, 5, 6, 8, 10]).map(n => (
                 <option key={n} value={n}>{n} members</option>
               ))}
             </select>

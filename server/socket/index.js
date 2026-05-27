@@ -3,6 +3,7 @@ const roomHandlers = require('./roomHandlers')
 const focusHandlers = require('./focusHandlers')
 const chatHandlers = require('./chatHandlers')
 const timerHandlers = require('./timerHandlers')
+const webrtcHandlers = require('./webrtcHandlers')
 
 module.exports = function initSocket(io) {
   // roomId → { phase, duration, startedAt, cycleCount, isPaused, pausedAt, remainingAtPause, workDuration, shortBreak, longBreak }
@@ -21,9 +22,13 @@ module.exports = function initSocket(io) {
   })
 
   io.on('connection', (socket) => {
+    // Personal room so we can target this user directly in webrtc signaling
+    socket.join(`user:${socket.userId}`)
+
     roomHandlers(io, socket, roomStates)
     focusHandlers(io, socket)
     chatHandlers(io, socket)
     timerHandlers(io, socket, roomStates)
+    webrtcHandlers(io, socket)
   })
 }
