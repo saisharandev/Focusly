@@ -70,7 +70,7 @@ export default function Sidebar() {
   const sidebarContent = (
     <div className="flex flex-col h-full">
       <div className="px-5 py-5 border-b border-white/8">
-        <span className="text-xl font-bold text-text-primary tracking-tight">Focusly</span>
+        <span className="text-xl font-bold font-mono text-text-primary tracking-tight">Focusly</span>
       </div>
 
       <NavItems onClose={() => setMobileOpen(false)} />

@@ -8,6 +8,7 @@ export default {
         'bg-surface':     '#18181B',
         'bg-card':        '#27272A',
         'accent-teal':    '#14B8A6',
+        'accent-cyan':    '#7df9ff',
         'accent-purple':  '#A855F7',
         'accent-amber':   '#F59E0B',
         'accent-red':     '#EF4444',
@@ -16,7 +17,8 @@ export default {
         'text-muted':     '#71717A',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       animation: {
         'float-slow':   'float 8s ease-in-out infinite',

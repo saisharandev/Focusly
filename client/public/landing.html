@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Focusly — quiet rooms for loud weeks.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* =========================================================
+     FOCUSLY · v2 minimal
+     One accent (cyan), generous whitespace, hairline rules,
+     monospace details, no glow except a single hero pulse.
+     ========================================================= */
+  :root{
+    --bg:#0b0b0e;
+    --ink:#ececef;
+    --ink-2:#b8b9bf;
+    --muted:#6c6e76;
+    --line:rgba(255,255,255,.08);
+    --line-2:rgba(255,255,255,.14);
+    --cyan:#7df9ff;       /* softer cyan, less neon */
+    --green:#7ee2a8;
+    --amber:#f5c177;
+    --red:#ff8a92;
+
+    --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans:'Space Grotesk', -apple-system, system-ui, sans-serif;
+
+    --maxw: 1080px;
+    --gut: 32px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* very subtle grain */
+  body::after{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:50;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .8 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity:.035; mix-blend-mode: overlay;
+  }
+
+  .wrap{max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gut)}
+  .mono{font-family: var(--mono); letter-spacing:.02em}
+  .uctag{font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted)}
+  .rule{height:1px; background: var(--line); width:100%}
+
+  /* ---------- NAV ---------- */
+  nav{
+    position: sticky; top:0; z-index: 20;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    background: rgba(11,11,14,.75);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .row{
+    display:flex; align-items:center; justify-content:space-between;
+    height: 60px;
+  }
+  .logo{
+    display:inline-flex; align-items:center; gap:10px;
+    font-family: var(--mono); font-weight: 600; font-size: 14px; letter-spacing:.06em;
+    color: var(--ink); text-decoration:none;
+  }
+  .logo .dot{
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 0 0 rgba(125,249,255,.6);
+    animation: pulse 1.8s ease-out infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow: 0 0 0 0 rgba(125,249,255,.55) }
+    70%{ box-shadow: 0 0 0 8px rgba(125,249,255,0) }
+    100%{ box-shadow: 0 0 0 0 rgba(125,249,255,0) }
+  }
+  .nav-links{ display:flex; align-items:center; gap: 4px }
+  .nav-links a.link{
+    font-family: var(--mono); font-size: 12px; color: var(--ink-2);
+    text-decoration:none; padding: 8px 12px; letter-spacing: .04em;
+  }
+  .nav-links a.link:hover{ color: var(--ink) }
+
+  .btn{
+    display:inline-flex; align-items:center; gap: 8px;
+    font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: .06em;
+    padding: 9px 14px; border-radius: 6px; text-decoration: none; cursor: pointer;
+    border: 1px solid var(--line-2); background: transparent; color: var(--ink);
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .btn:hover{ border-color: rgba(255,255,255,.28) }
+  .btn.cta{
+    background: var(--ink); color: #0b0b0e; border-color: var(--ink);
+  }
+  .btn.cta:hover{ background: var(--cyan); border-color: var(--cyan); color:#001416 }
+  .btn .arr{ transition: transform .18s ease }
+  .btn:hover .arr{ transform: translateX(3px) }
+
+  /* ---------- HERO ---------- */
+  section.hero{
+    padding: 96px 0 80px;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:10px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .eyebrow .ddot{ width:6px; height:6px; border-radius:50%; background: var(--green) }
+
+  h1.head{
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: clamp(38px, 5.4vw, 68px);
+    line-height: 1.04;
+    letter-spacing: -0.025em;
+    margin: 22px 0 22px;
+    max-width: 18ch;
+    text-wrap: balance;
+  }
+  h1.head em{
+    font-style: normal;
+    color: var(--cyan);
+  }
+  .sub{
+    color: var(--ink-2);
+    font-size: 17px;
+    line-height: 1.55;
+    max-width: 54ch;
+    margin: 0;
+  }
+  .sub b{ color: var(--ink); font-weight: 600 }
+
+  .hero-cta{ display:flex; gap: 10px; margin-top: 28px; flex-wrap: wrap }
+  .meta-row{
+    margin-top: 26px;
+    display:flex; gap: 22px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .08em; color: var(--muted);
+  }
+  .meta-row span::before{ content: "· "; color: var(--cyan); margin-right: 4px }
+
+  /* hero mock — single room card, very simplified */
+  .hero-grid{
+    display:grid; grid-template-columns: 1.1fr .9fr; gap: 64px; align-items: center;
+  }
+  .room{
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px;
+    background: rgba(255,255,255,.015);
+  }
+  .room-head{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .08em;
+    padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 14px;
+  }
+  .room-head .name{ color: var(--ink-2) }
+  .room-head .present{
+    color: var(--green); display:inline-flex; gap: 6px; align-items: center;
+  }
+  .room-head .present::before{
+    content: ""; width:6px; height:6px; border-radius:50%; background: var(--green);
+    box-shadow: 0 0 6px rgba(126,226,168,.7);
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink{ 50%{opacity:.35} }
+
+  .members{
+    display:flex; flex-direction: column; gap: 0;
+  }
+  .member{
+    display:grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--line);
+    transition: opacity .25s;
+  }
+  .member:last-child{ border-bottom: none }
+  .member .av{
+    width: 30px; height: 30px; border-radius: 8px;
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    background: #18181d; border: 1px solid var(--line-2); color: var(--ink-2);
+    position: relative;
+  }
+  .member .av::after{
+    content: ""; position: absolute; right: -3px; bottom: -3px;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--green); border: 2px solid var(--bg);
+    transition: background .3s;
+  }
+  .member[data-state="idle"] .av::after{ background: var(--amber) }
+  .member[data-state="away"] .av::after{ background: var(--red) }
+  .member[data-state="away"]{ opacity: .55 }
+
+  .member .meta{ display:flex; flex-direction: column; gap: 2px }
+  .member .nm{ font-size: 13px; color: var(--ink); font-weight: 500; line-height: 1.1 }
+  .member .st{
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--green); text-transform: lowercase;
+  }
+  .member[data-state="idle"] .st{ color: var(--amber) }
+  .member[data-state="away"] .st{ color: var(--red) }
+  .member .t{ font-family: var(--mono); font-size: 11px; color: var(--muted) }
+
+  .room-foot{
+    margin-top: 18px;
+    padding-top: 14px; border-top: 1px solid var(--line);
+    display:grid; grid-template-columns: 1fr auto; align-items:end; gap: 12px;
+  }
+  .pomo-lbl{ font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted)}
+  .pomo-time{
+    font-family: var(--mono); font-weight: 500; font-size: 28px;
+    letter-spacing: .02em; color: var(--ink); line-height: 1;
+    margin-top: 4px;
+  }
+  .pomo-right{ font-family: var(--mono); font-size: 11px; color: var(--ink-2); text-align: right; line-height: 1.5}
+  .pomo-bar{
+    grid-column: 1/-1; height: 2px; background: var(--line); border-radius: 1px; overflow: hidden; margin-top: 6px;
+  }
+  .pomo-bar i{
+    display: block; height: 100%; background: var(--cyan); width: 64%;
+  }
+
+  /* ---------- COMPARE ---------- */
+  .compare-wrap{
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(255,255,255,.012);
+  }
+  .term-bar{
+    padding: 11px 16px; border-bottom: 1px solid var(--line);
+    font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .08em;
+    display:flex; align-items:center; gap: 10px;
+  }
+  .term-bar i{ width:8px; height:8px; border-radius: 50%; display:inline-block; background: var(--line-2) }
+  .term-bar .pth{ margin-left: 6px }
+  .compare{
+    display:grid; grid-template-columns: 1fr 1fr 1fr;
+    font-family: var(--mono); font-size: 13px;
+  }
+  .ch{ padding: 14px 18px; border-bottom: 1px solid var(--line) }
+  .ch.head{
+    font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+  }
+  .ch.head.us{ color: var(--cyan) }
+  .col-left{ color: var(--muted); border-right: 1px solid var(--line) }
+  .col-other{ color: var(--muted); border-right: 1px solid var(--line); text-decoration: line-through; text-decoration-color: rgba(255,138,146,.45) }
+  .col-us{ color: var(--ink) }
+  .col-us .ok{ color: var(--cyan); margin-right: 4px }
+  .compare > div:nth-last-child(-n+3){ border-bottom: none }
+  .pfx{ color: var(--muted); margin-right: 8px }
+
+  /* ---------- PRIVACY ---------- */
+  .priv-grid{
+    display:grid; grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+  }
+  .priv{
+    padding: 26px 22px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .priv .ic{
+    width: 22px; height: 22px; color: var(--cyan); margin-bottom: 18px;
+  }
+  .priv h4{ font-family: var(--sans); font-weight: 500; font-size: 14px; margin: 0 0 6px; letter-spacing: -0.005em }
+  .priv p{ margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.55 }
+
+  /* ---------- SECTIONS ---------- */
+  .sec{ padding: 96px 0 }
+  .sec-head{
+    display:grid; grid-template-columns: auto 1fr auto;
+    gap: 24px; align-items: end;
+    margin-bottom: 48px;
+  }
+  .sec-head .idx{ font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .14em; padding-bottom: 6px }
+  .sec-head h2{
+    font-family: var(--sans); font-weight: 500;
+    font-size: clamp(26px, 3vw, 36px);
+    margin: 0; letter-spacing: -0.02em; line-height: 1.08;
+    max-width: 22ch;
+    text-wrap: balance;
+  }
+  .sec-head .right{
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    letter-spacing: .1em; text-transform: uppercase; padding-bottom: 6px;
+    text-align: right;
+  }
+
+  /* ---------- FEATURES ---------- */
+  .features{
+    display:grid; grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+  }
+  .feat{
+    position: relative;
+    padding: 28px 26px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    transition: background .2s ease;
+  }
+  .feat:hover{ background: rgba(255,255,255,.018) }
+  .feat:hover h3 .ar{ opacity: 1; transform: translateX(0) }
+  .feat .num{
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em; color: var(--muted);
+    margin-bottom: 18px; display: block;
+  }
+  .feat h3{
+    font-family: var(--sans); font-weight: 500; font-size: 17px;
+    margin: 0 0 8px; letter-spacing: -0.01em;
+    display:inline-flex; align-items:center; gap: 8px;
+  }
+  .feat h3 .ar{
+    font-family: var(--mono); color: var(--cyan); font-size: 13px; opacity: 0; transform: translateX(-4px);
+    transition: opacity .2s, transform .2s;
+  }
+  .feat p{
+    margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.55; max-width: 30ch;
+  }
+
+  /* ---------- PROBLEM STRIP ---------- */
+  section.strip{
+    padding: 80px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    text-align: center;
+  }
+  .strip .quote{
+    font-family: var(--sans); font-weight: 500;
+    font-size: clamp(22px, 3vw, 34px);
+    line-height: 1.28; letter-spacing: -0.015em;
+    color: var(--ink);
+    max-width: 24ch; margin: 0 auto;
+    text-wrap: balance;
+  }
+  .strip .quote em{ font-style: normal; color: var(--cyan) }
+  .strip .src{
+    margin-top: 18px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+  }
+
+  /* ---------- FINAL ---------- */
+  section.final{
+    padding: 140px 0;
+    text-align: center;
+    position: relative;
+    border-top: 1px solid var(--line);
+  }
+  section.final::before{
+    content:""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 760px; height: 240px; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(125,249,255,.10), transparent 70%);
+    filter: blur(20px);
+  }
+  section.final .inner{ position: relative }
+  section.final h2{
+    font-family: var(--sans); font-weight: 500;
+    font-size: clamp(32px, 4.6vw, 56px); letter-spacing: -0.025em; line-height: 1.05;
+    margin: 0 0 14px; max-width: 18ch; margin-left: auto; margin-right: auto;
+    text-wrap: balance;
+  }
+  section.final h2 em{ font-style: normal; color: var(--cyan) }
+  section.final p{ color: var(--ink-2); max-width: 44ch; margin: 0 auto 28px; font-size: 16px }
+  section.final .ctarow{ display:flex; gap: 10px; justify-content: center; flex-wrap: wrap }
+  section.final .meta{
+    margin-top: 22px;
+    display:inline-flex; gap: 18px; flex-wrap: wrap; justify-content: center;
+    font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase;
+  }
+  section.final .meta span::before{ content: "· "; color: var(--cyan); margin-right: 3px }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    border-top: 1px solid var(--line);
+    padding: 32px 0 48px;
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+  }
+  footer .frow{
+    display:grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 32px;
+  }
+  footer .blurb{ color: var(--muted); margin-top: 6px; max-width: 36ch; font-size: 11px; line-height: 1.55 }
+  footer .copy{ margin-top: 16px; font-size: 11px; letter-spacing: .06em }
+  footer .col h5{
+    font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 12px; font-weight: 500;
+  }
+  footer .col ul{ list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px }
+  footer .col li{ color: var(--ink-2); font-size: 12px }
+  footer .col li b{ color: var(--cyan); font-weight: 500; margin-right: 8px }
+
+  /* reveal */
+  .reveal{ opacity: 0; transform: translateY(10px); transition: opacity .7s ease, transform .7s ease }
+  .reveal.in{ opacity: 1; transform: none }
+  .reveal[data-d="1"]{ transition-delay: .04s }
+  .reveal[data-d="2"]{ transition-delay: .10s }
+  .reveal[data-d="3"]{ transition-delay: .16s }
+  .reveal[data-d="4"]{ transition-delay: .22s }
+  .reveal[data-d="5"]{ transition-delay: .28s }
+
+  /* responsive */
+  @media (max-width: 900px){
+    .hero-grid{ grid-template-columns: 1fr; gap: 48px }
+    .features{ grid-template-columns: repeat(2, 1fr) }
+    .priv-grid{ grid-template-columns: repeat(2, 1fr) }
+    footer .frow{ grid-template-columns: 1fr }
+    .compare{ font-size: 12px }
+    .sec-head{ grid-template-columns: 1fr }
+    .sec-head .right{ text-align: left }
+  }
+  @media (max-width: 560px){
+    .features{ grid-template-columns: 1fr }
+    .priv-grid{ grid-template-columns: 1fr }
+    .compare{ grid-template-columns: 1.2fr 1fr 1fr; font-size: 11.5px }
+    .nav-links .link{ display: none }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="wrap row">
+    <a href="#" class="logo"><span class="dot"></span> focusly</a>
+    <div class="nav-links">
+      <a class="link" href="#features">features</a>
+      <a class="link" href="#compare">compare</a>
+      <a class="link" href="#privacy">privacy</a>
+      <a class="btn" href="/login">sign in</a>
+      <a class="btn cta" href="/signup">start studying <span class="arr">→</span></a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" data-screen-label="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow reveal" data-d="1"><span class="ddot"></span> beta · built by a CS student at 3am</span>
+      <h1 class="head reveal" data-d="2">
+        Quiet rooms<br>
+        for <em>loud</em> weeks.
+      </h1>
+      <p class="sub reveal" data-d="3">
+        Focusly is a virtual study room for college students. Drop into a live session and use the <b>library effect</b> — ambient accountability that quietly makes you do the work.
+      </p>
+      <div class="hero-cta reveal" data-d="4">
+        <a class="btn cta" href="/signup">Start studying free <span class="arr">→</span></a>
+      </div>
+      <div class="meta-row reveal" data-d="5">
+        <span>free for students</span>
+        <span>camera stays on-device</span>
+        <span>works on shitty laptops</span>
+      </div>
+    </div>
+
+    <div class="reveal" data-d="3">
+      <div class="room" id="room">
+        <div class="room-head">
+          <span class="name">org_chem_finals.session</span>
+          <span class="present"><span id="presentPct">87</span>% present</span>
+        </div>
+
+        <div class="members">
+          <div class="member" data-state="focused">
+            <div class="av">MK</div>
+            <div class="meta">
+              <span class="nm">may.k</span>
+              <span class="st">focused · chem 304</span>
+            </div>
+            <span class="t">02:14</span>
+          </div>
+          <div class="member" data-state="focused">
+            <div class="av">DR</div>
+            <div class="meta">
+              <span class="nm">dev.r</span>
+              <span class="st">focused · math 218</span>
+            </div>
+            <span class="t">01:42</span>
+          </div>
+          <div class="member" data-state="idle">
+            <div class="av">SY</div>
+            <div class="meta">
+              <span class="nm">sam.y</span>
+              <span class="st">idle · 0:38</span>
+            </div>
+            <span class="t">00:52</span>
+          </div>
+          <div class="member" data-state="away">
+            <div class="av">JL</div>
+            <div class="meta">
+              <span class="nm">jo.l</span>
+              <span class="st">away · brb</span>
+            </div>
+            <span class="t">00:21</span>
+          </div>
+        </div>
+
+        <div class="room-foot">
+          <div>
+            <div class="pomo-lbl">pomodoro · synced</div>
+            <div class="pomo-time" id="pomoTime">24:48</div>
+          </div>
+          <div class="pomo-right">focus phase<br><span style="color:var(--muted)">block 3 of 4</span></div>
+          <div class="pomo-bar"><i id="pomoBar"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM STRIP -->
+<section class="strip" data-screen-label="problem">
+  <div class="wrap">
+    <p class="quote">Libraries work — not because of the books. <em>Because of the people.</em></p>
+    <div class="src">— the focusly thesis</div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="sec" id="features" data-screen-label="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="idx reveal" data-d="1">01 / features</span>
+      <h2 class="reveal" data-d="2">Six features. No bloat.</h2>
+      <span class="right reveal" data-d="3">Everything you need to actually finish<br>the problem set.</span>
+    </div>
+
+    <div class="features">
+      <div class="feat reveal" data-d="1">
+        <span class="num">F-01</span>
+        <h3>AI presence tracking <span class="ar">↗</span></h3>
+        <p>Your laptop camera quietly counts seconds spent looking at your screen. Nothing leaves the device.</p>
+      </div>
+      <div class="feat reveal" data-d="2">
+        <span class="num">F-02</span>
+        <h3>Synced pomodoro <span class="ar">↗</span></h3>
+        <p>Everyone in the room is on the same 25/5. When the bell rings, the room rests together.</p>
+      </div>
+      <div class="feat reveal" data-d="3">
+        <span class="num">F-03</span>
+        <h3>Live group rooms <span class="ar">↗</span></h3>
+        <p>Public rooms by class code, private rooms by invite. Drop in for 20 minutes, or stay until 4am.</p>
+      </div>
+      <div class="feat reveal" data-d="4">
+        <span class="num">F-04</span>
+        <h3>Leaderboards &amp; streaks <span class="ar">↗</span></h3>
+        <p>Compete with your dorm, your major, or your roommate. Your streak is yours. No streak-shield paywalls.</p>
+      </div>
+      <div class="feat reveal" data-d="5">
+        <span class="num">F-05</span>
+        <h3>Analytics dashboard <span class="ar">↗</span></h3>
+        <p>Heatmap of your focus by hour of day. Brutally honest about your 2pm slump. Use it.</p>
+      </div>
+      <div class="feat reveal" data-d="5">
+        <span class="num">F-06</span>
+        <h3>Study music <span class="ar">↗</span></h3>
+        <p>Lo-fi, brown noise, café murmur, or the actual sound of a library at 11pm. No ad breaks.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section class="sec" id="compare" data-screen-label="compare">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="idx reveal" data-d="1">02 / vs.</span>
+      <h2 class="reveal" data-d="2">Diff other apps &nbsp;→&nbsp; focusly.</h2>
+      <span class="right reveal" data-d="3">An honest comparison.<br>No marketing weasel words.</span>
+    </div>
+
+    <div class="compare-wrap reveal" data-d="3">
+      <div class="term-bar">
+        <i></i><i></i><i></i>
+        <span class="pth">~/study-apps/comparison.md</span>
+      </div>
+      <div class="compare">
+        <div class="ch head">criterion</div>
+        <div class="ch head">other apps</div>
+        <div class="ch head us">focusly</div>
+
+        <div class="ch col-left"><span class="pfx">01</span>accountability</div>
+        <div class="ch col-other">timer that you can pause</div>
+        <div class="ch col-us"><span class="ok">→</span> people working next to you</div>
+
+        <div class="ch col-left"><span class="pfx">02</span>camera data</div>
+        <div class="ch col-other">uploaded to a server somewhere</div>
+        <div class="ch col-us"><span class="ok">→</span> stays on your device, period</div>
+
+        <div class="ch col-left"><span class="pfx">03</span>pomodoro</div>
+        <div class="ch col-other">your own timer, alone</div>
+        <div class="ch col-us"><span class="ok">→</span> synced across the room</div>
+
+        <div class="ch col-left"><span class="pfx">04</span>cost</div>
+        <div class="ch col-other">$6.99+/mo, streaks paywalled</div>
+        <div class="ch col-us"><span class="ok">→</span> free for students. forever.</div>
+
+        <div class="ch col-left"><span class="pfx">05</span>vibe</div>
+        <div class="ch col-other">corporate productivity dashboard</div>
+        <div class="ch col-us"><span class="ok">→</span> 3am library, anywhere</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRIVACY -->
+<section class="sec" id="privacy" data-screen-label="privacy" style="padding-top: 24px">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="idx reveal" data-d="1">03 / privacy</span>
+      <h2 class="reveal" data-d="2">Your camera <em style="font-style:normal;color:var(--cyan)">never</em> leaves your laptop.</h2>
+      <span class="right reveal" data-d="3">Presence detection runs on-device<br>in WebAssembly. Nothing is stored.</span>
+    </div>
+
+    <div class="priv-grid">
+      <div class="priv reveal" data-d="1">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <h4>On-device only</h4>
+        <p>Frame data is processed locally with MediaPipe. No bytes hit our servers.</p>
+      </div>
+      <div class="priv reveal" data-d="2">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l5 5L21 4"/></svg>
+        <h4>One number, not a face</h4>
+        <p>The room sees a presence percentage. No video. No screenshots. Ever.</p>
+      </div>
+      <div class="priv reveal" data-d="3">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+        <h4>Camera-off mode</h4>
+        <p>Skip the camera entirely. You still appear in the room and on the leaderboard. Focus score won't be calculated — that's fine.</p>
+      </div>
+      <div class="priv reveal" data-d="4">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        <h4>Open detection model</h4>
+        <p>Runs on Google's open-source MediaPipe models. The detection algorithm itself is fully public and auditable.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final" data-screen-label="final-cta">
+  <div class="wrap inner">
+    <h2>Your next study session <em>starts now</em>.</h2>
+    <p>Drop into a room. Set a pomodoro. Be the person other people are quietly trying to match.</p>
+    <div class="ctarow">
+      <a class="btn cta" href="/signup">Start studying free <span class="arr">→</span></a>
+      <a class="btn" href="/rooms">Browse live rooms</a>
+    </div>
+    <div class="meta">
+      <span>no credit card</span>
+      <span>free forever for .edu</span>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer data-screen-label="footer">
+  <div class="wrap frow">
+    <div>
+      <div class="logo" style="margin-bottom: 4px"><span class="dot"></span> focusly</div>
+      <div class="blurb">A virtual study room for college students. Made by a CS undergrad at 3:14am.</div>
+      <div class="copy">© 2026 Focusly Labs · MIT</div>
+    </div>
+    <div class="col">
+      <h5>stack</h5>
+      <ul>
+        <li><b>fe</b>React 19</li>
+        <li><b>be</b>Node 22</li>
+        <li><b>rt</b>Socket.IO</li>
+        <li><b>cv</b>MediaPipe</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h5>links</h5>
+      <ul>
+        <li>github</li>
+        <li>changelog</li>
+        <li>discord</li>
+        <li>status</li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* reveal */
+(function(){
+  const io = new IntersectionObserver((es) => {
+    es.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target) }});
+  }, { threshold: .12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+})();
+
+/* avatar state cycler */
+(function(){
+  const states = ['focused','focused','focused','idle','away'];
+  const subs = ['chem 304','math 218','cs 161','hist 220','phil 110','econ 200'];
+  const idleTxt = ['idle','stretching','tab switch'];
+  const awayTxt = ['away · brb','coffee run','bathroom'];
+  const pick = (a)=>a[Math.floor(Math.random()*a.length)];
+  const cards = document.querySelectorAll('#room .member');
+  cards.forEach((c, i) => {
+    setInterval(() => {
+      const ns = pick(states);
+      c.setAttribute('data-state', ns);
+      const st = c.querySelector('.st');
+      if(ns === 'focused') st.textContent = `focused · ${pick(subs)}`;
+      else if(ns === 'idle') st.textContent = `${pick(idleTxt)} · 0:${10+Math.floor(Math.random()*50)}`;
+      else st.textContent = pick(awayTxt);
+    }, 2400 + i * 600);
+  });
+
+  const pct = document.getElementById('presentPct');
+  setInterval(() => { pct.textContent = 84 + Math.floor(Math.random()*10) }, 2800);
+})();
+
+/* pomodoro */
+(function(){
+  const time = document.getElementById('pomoTime');
+  const bar = document.getElementById('pomoBar');
+  let s = 24*60 + 48;
+  const total = 25*60;
+  function tick(){
+    s = Math.max(0, s - 1);
+    const m = Math.floor(s/60), sec = s%60;
+    time.textContent = `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    bar.style.width = (((total-s)/total)*100).toFixed(1) + '%';
+    if(s === 0) s = total;
+  }
+  bar.style.width = (((total-s)/total)*100).toFixed(1) + '%';
+  setInterval(tick, 1000);
+})();
+</script>
+
+</body>
+</html>

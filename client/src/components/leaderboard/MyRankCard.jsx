@@ -24,17 +24,17 @@ export default function MyRankCard({ myStats, entries, currentUserId }) {
         <div className="flex items-center gap-6">
           <div className="text-center">
             <p className="text-xs text-text-muted mb-0.5">Your Rank</p>
-            <p className="text-2xl font-bold text-accent-teal">
+            <p className="text-2xl font-bold font-mono text-accent-teal">
               {rank ? `#${rank}` : inTopThree ? `#${rank}` : '—'}
             </p>
           </div>
           <div className="text-center">
             <p className="text-xs text-text-muted mb-0.5">This Week</p>
-            <p className="text-lg font-semibold text-text-primary">{formatDuration(myStats?.totalMinutes || 0)}</p>
+            <p className="text-lg font-semibold font-mono text-text-primary">{formatDuration(myStats?.totalMinutes || 0)}</p>
           </div>
           <div className="text-center">
             <p className="text-xs text-text-muted mb-0.5">Avg Focus</p>
-            <p className="text-lg font-semibold text-text-primary">{myStats?.avgFocus || 0}%</p>
+            <p className="text-lg font-semibold font-mono text-text-primary">{myStats?.avgFocus || 0}%</p>
           </div>
         </div>
         {minutesToNext > 0 && nextRank && (

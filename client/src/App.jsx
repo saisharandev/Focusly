@@ -88,7 +88,7 @@ function App() {
             } />
 
             {/* Fallback */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/landing.html" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
           </BattleProvider>

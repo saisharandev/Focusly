@@ -37,7 +37,7 @@ export default function StatsCard({ icon: Icon, label, value, displayValue, colo
       </div>
       <div>
         <p className="text-text-muted text-xs font-medium uppercase tracking-wider mb-1">{label}</p>
-        <p className={`text-2xl font-bold ${color}`}>
+        <p className={`text-2xl font-bold font-mono ${color}`}>
           {displayValue ?? animated}
         </p>
       </div>
