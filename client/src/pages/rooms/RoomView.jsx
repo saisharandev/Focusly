@@ -52,11 +52,7 @@ export default function RoomView() {
   const { faceDetectedRef } = useFaceDetection(videoRef, { enabled: cameraEnabled })
   const focusStatus = !cameraEnabled ? 'untracked' : (faceDetectedRef.current ? 'focused' : 'idle')
 
-  const { remoteStreams, startVideo, stopVideo } = useWebRTC({
-    roomId: id,
-    socket,
-    enabled: videoCallEnabled,
-  })
+  const { remoteStreams, startVideo, stopVideo } = useWebRTC({ roomId: id, socket })
 
   // Keep cameraEnabledRef in sync so recordRoomSession closure reads current value
   useEffect(() => { cameraEnabledRef.current = cameraEnabled }, [cameraEnabled])

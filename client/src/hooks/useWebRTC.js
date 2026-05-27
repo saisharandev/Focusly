@@ -13,7 +13,7 @@ const ICE_SERVERS = [
   },
 ]
 
-export default function useWebRTC({ roomId, socket, enabled }) {
+export default function useWebRTC({ roomId, socket }) {
   const pcsRef = useRef({})
   const localStreamRef = useRef(null)
   const [remoteStreams, setRemoteStreams] = useState({})
@@ -70,8 +70,11 @@ export default function useWebRTC({ roomId, socket, enabled }) {
     setRemoteStreams({})
   }
 
+  // Always register listeners — NOT gated on enabled.
+  // Gating caused a race: webrtc:join-video was emitted before setVideoCallEnabled(true)
+  // triggered the re-render, so incoming offers arrived before listeners existed.
   useEffect(() => {
-    if (!socket || !enabled) return
+    if (!socket) return
 
     async function onUserJoinedVideo({ userId }) {
       const pc = makePc(userId)
@@ -120,7 +123,7 @@ export default function useWebRTC({ roomId, socket, enabled }) {
       socket.off('webrtc:user-left-video', onUserLeftVideo)
       closeAll()
     }
-  }, [socket, roomId, enabled])
+  }, [socket, roomId])
 
   async function startVideo() {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
