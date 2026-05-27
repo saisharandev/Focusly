@@ -10,6 +10,7 @@ export default function useFaceDetection(videoRef, { enabled = true } = {}) {
   const [error, setError] = useState(null)
   const detectorRef = useRef(null)
   const intervalRef = useRef(null)
+  const faceDetectedRef = useRef(false)
 
   useEffect(() => {
     if (!enabled) return
@@ -23,7 +24,7 @@ export default function useFaceDetection(videoRef, { enabled = true } = {}) {
 
         const vision = await FilesetResolver.forVisionTasks(WASM_PATH)
         const detector = await FaceDetector.createFromOptions(vision, {
-          baseOptions: { modelAssetPath: MODEL_PATH, delegate: 'GPU' },
+          baseOptions: { modelAssetPath: MODEL_PATH },
           runningMode: 'VIDEO',
           minDetectionConfidence: 0.5,
         })
@@ -37,7 +38,9 @@ export default function useFaceDetection(videoRef, { enabled = true } = {}) {
           if (!video || video.readyState < 2) return
           try {
             const result = detector.detectForVideo(video, performance.now())
-            setFaceDetected(result.detections.length > 0)
+            const detected = result.detections.length > 0
+            faceDetectedRef.current = detected
+            setFaceDetected(detected)
           } catch {}
         }, DETECTION_INTERVAL_MS)
       } catch (err) {
@@ -55,5 +58,5 @@ export default function useFaceDetection(videoRef, { enabled = true } = {}) {
     }
   }, [enabled])
 
-  return { faceDetected, isLoaded, error }
+  return { faceDetected, faceDetectedRef, isLoaded, error }
 }

@@ -29,6 +29,8 @@ export default function RoomView() {
   const [copied, setCopied] = useState(false)
   const joinTimeRef = useRef(Date.now())
   const currentRoomRef = useRef(id)
+  const timerStartedAtRef = useRef(null)
+  const timerTotalDurationRef = useRef(null)
 
   const { faceDetected } = useFaceDetection(videoRef, { enabled: true })
   const focusStatus = faceDetected ? 'focused' : 'idle'
@@ -90,21 +92,42 @@ export default function RoomView() {
 
     socket.on('timer:sync', payload => {
       setTimerState(prev => ({ ...prev, ...payload }))
+      // Reconstruct countdown refs from sync payload so late joiners tick correctly
+      if (!payload.isPaused && payload.phase !== 'IDLE') {
+        const durMap = { WORKING: payload.workDuration || 25, SHORT_BREAK: payload.shortBreak || 5, LONG_BREAK: payload.longBreak || 15 }
+        const totalMs = (durMap[payload.phase] || 25) * 60 * 1000
+        timerTotalDurationRef.current = totalMs
+        timerStartedAtRef.current = Date.now() - (totalMs - payload.remaining * 1000)
+      }
     })
 
     socket.on('timer:started', payload => {
-      setTimerState({ phase: payload.phase, remaining: Math.round(payload.duration / 1000), cycleCount: 0, isPaused: false })
+      timerStartedAtRef.current = payload.startedAt
+      timerTotalDurationRef.current = payload.duration
+      setTimerState({
+        phase: payload.phase,
+        remaining: Math.round(payload.duration / 1000),
+        cycleCount: payload.cycleCount || 0,
+        isPaused: false,
+        workDuration: payload.workDuration,
+        shortBreak: payload.shortBreak,
+        longBreak: payload.longBreak,
+      })
     })
 
     socket.on('timer:paused', ({ remainingAtPause }) => {
+      timerStartedAtRef.current = null
       setTimerState(prev => ({ ...prev, isPaused: true, remaining: Math.round(remainingAtPause / 1000) }))
     })
 
     socket.on('timer:resumed', ({ startedAt }) => {
-      setTimerState(prev => ({ ...prev, isPaused: false, startedAt }))
+      timerStartedAtRef.current = startedAt
+      setTimerState(prev => ({ ...prev, isPaused: false }))
     })
 
     socket.on('timer:skipped', payload => {
+      timerStartedAtRef.current = payload.startedAt
+      timerTotalDurationRef.current = payload.duration
       setTimerState({ phase: payload.phase, remaining: Math.round(payload.duration / 1000), cycleCount: payload.cycleCount, isPaused: false })
     })
 
@@ -130,6 +153,20 @@ export default function RoomView() {
       socket.off('room_ended')
     }
   }, [socket, room, id])
+
+  // Countdown: decrement remaining every second based on server startedAt
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!timerStartedAtRef.current || !timerTotalDurationRef.current) return
+      const elapsed = Date.now() - timerStartedAtRef.current
+      const remaining = Math.max(0, Math.round((timerTotalDurationRef.current - elapsed) / 1000))
+      setTimerState(prev => {
+        if (prev.isPaused || prev.phase === 'IDLE') return prev
+        return { ...prev, remaining }
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   // Broadcast focus status every 3s
   useEffect(() => {

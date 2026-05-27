@@ -36,13 +36,13 @@ export default function SessionActive() {
   const [focusState, setFocusState] = useState('focused')
   const [focusScore, setFocusScore] = useState(100)
   const [distractionCount, setDistractionCount] = useState(0)
-  const [noFaceStart, setNoFaceStart] = useState(null)
+  const noFaceStartRef = useRef(null)
   const [isEnding, setIsEnding] = useState(false)
   const [showReport, setShowReport] = useState(false)
   const [sessionData, setSessionData] = useState(null)
 
   const sessionTimer = useSessionTimer()
-  const { faceDetected, isLoaded: cameraLoaded } = useFaceDetection(videoRef, { enabled: cameraEnabled })
+  const { faceDetectedRef, isLoaded: cameraLoaded } = useFaceDetection(videoRef, { enabled: cameraEnabled })
 
   // Start session on mount
   useEffect(() => {
@@ -60,42 +60,41 @@ export default function SessionActive() {
     return () => sessionTimer.stop()
   }, [])
 
-  // Update focus state every time faceDetected changes (every 3s from hook)
+  // Focus state machine — runs every 3s on its own interval, reads faceDetectedRef
   useEffect(() => {
     if (!cameraEnabled) {
       setFocusState('untracked')
       return
     }
-
-    totalSecondsRef.current += 3
-
-    if (faceDetected) {
-      focusedSecondsRef.current += 3
-      setFocusState('focused')
-      setNoFaceStart(null)
-    } else {
-      const now = Date.now()
-      const start = noFaceStart || now
-      if (!noFaceStart) setNoFaceStart(now)
-
-      const elapsed = now - start
-      if (elapsed < 10_000) {
-        setFocusState('idle')
+    const interval = setInterval(() => {
+      totalSecondsRef.current += 3
+      const detected = faceDetectedRef.current
+      if (detected) {
+        focusedSecondsRef.current += 3
+        prevFocusStateRef.current = 'focused'
+        setFocusState('focused')
+        noFaceStartRef.current = null
       } else {
-        if (prevFocusStateRef.current !== 'distracted') {
-          setDistractionCount(c => c + 1)
+        const now = Date.now()
+        if (!noFaceStartRef.current) noFaceStartRef.current = now
+        const elapsed = now - noFaceStartRef.current
+        if (elapsed < 10_000) {
+          prevFocusStateRef.current = 'idle'
+          setFocusState('idle')
+        } else {
+          if (prevFocusStateRef.current !== 'distracted') {
+            setDistractionCount(c => c + 1)
+          }
+          prevFocusStateRef.current = 'distracted'
+          setFocusState('distracted')
         }
-        setFocusState('distracted')
       }
-    }
-
-    prevFocusStateRef.current = focusState
-
-    if (totalSecondsRef.current > 0) {
-      const score = Math.round((focusedSecondsRef.current / totalSecondsRef.current) * 100)
-      setFocusScore(Math.max(0, Math.min(100, score)))
-    }
-  }, [faceDetected])
+      if (totalSecondsRef.current > 0) {
+        setFocusScore(Math.round((focusedSecondsRef.current / totalSecondsRef.current) * 100))
+      }
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [cameraEnabled])
 
   async function endSession(status = 'completed') {
     if (!sessionIdRef.current || isEnding) return
