@@ -100,9 +100,52 @@ audio.addEventListener('ended', playNext);
 ---
 
 ## Out of Scope
-- Spotify / Apple Music integration
 - User-uploaded tracks
 - Lyrics display
 - Sleep timer
 - Collaborative room music (everyone hears same track)
 - Downloading tracks
+
+---
+
+## Spotify Integration — Decision & Alternative
+
+### Why the Spotify Web Playback SDK is NOT viable
+
+Spotify's Web Playback SDK has a hard platform restriction: **the user must have an active Spotify Premium subscription**. There is no free tier, no workaround, and no way to play full tracks for free users. This eliminates most casual users of a study app.
+
+### Alternative: Spotify Playlist Embed (Recommended)
+
+Spotify exposes an official embed iframe that works for **all users** — free and Premium — with no OAuth, no SDK, no API key:
+
+```html
+<iframe
+  src="https://open.spotify.com/embed/playlist/{playlistId}?utm_source=generator&theme=0"
+  width="100%"
+  height="152"
+  frameBorder="0"
+  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+  loading="lazy"
+/>
+```
+
+This shows a Spotify mini-player with album art, track title, and play/pause. The user must have Spotify open (app or web) but does not need Premium for basic playback on Spotify's own player.
+
+### Planned feature: "Your Playlist" tab in music player
+
+Add a 6th tab to `FloatingMusicPlayer` alongside Lofi/Rain/Noise/Café/Nature:
+
+```
+[Lofi] [Rain] [Noise] [Café] [Nature] [My Playlist 🎵]
+```
+
+In the "My Playlist" tab:
+- Input field: paste any Spotify playlist/album/track URL
+- App extracts the Spotify URI (`spotify.com/{type}/{id}`)
+- Renders the Spotify embed iframe
+- URL saved to `localStorage` so it persists across sessions
+- If no URL entered: shows a placeholder with "Paste a Spotify, YouTube, or SoundCloud link"
+
+This approach supports any embeddable music service (YouTube, SoundCloud, Spotify) with zero backend, zero API keys, and zero Premium requirement.
+
+**Phase 3 — add after core music player is stable.**

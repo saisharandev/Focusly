@@ -1,5 +1,6 @@
 import Sidebar from './Sidebar'
 import FloatingMusicPlayer from '../music/FloatingMusicPlayer'
+import SessionPiP from '../session/SessionPiP'
 
 export default function AppLayout({ children }) {
   return (
@@ -9,6 +10,7 @@ export default function AppLayout({ children }) {
         {children}
       </main>
       <FloatingMusicPlayer />
+      <SessionPiP />
     </div>
   )
 }

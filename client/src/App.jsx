@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { SocketProvider } from './context/SocketContext'
+import { ActiveSessionProvider } from './context/ActiveSessionContext'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import AppLayout from './components/layout/AppLayout'
 import ErrorBoundary from './components/ui/ErrorBoundary'
@@ -23,6 +24,7 @@ function App() {
     <ErrorBoundary>
     <BrowserRouter>
       <AuthProvider>
+        <ActiveSessionProvider>
         <SocketProvider>
           <Routes>
             {/* Auth routes */}
@@ -73,6 +75,7 @@ function App() {
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </SocketProvider>
+        </ActiveSessionProvider>
       </AuthProvider>
     </BrowserRouter>
     </ErrorBoundary>
