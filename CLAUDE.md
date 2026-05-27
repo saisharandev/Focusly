@@ -166,9 +166,11 @@ text-muted:    #71717A
 - [x] Pomodoro Timer — useReducer state machine, Web Audio phase sounds, Classic/Custom modes
 - [x] Group Rooms — browse, create, room view with synced timer, member grid with focus dots, chat panel, host controls
 
+## What's Built (Phase 2)
+- [x] Leaderboard (`/leaderboard`) — Friends/University/Global scope tabs, animated podium (top 3), rank table (4–50), MyRankCard with "study X more to reach #Y", 5-min server-side cache, `studiedWith` bidirectional tracking on room leave
+
 ## What's NOT Built Yet (Phase 2+)
-- Leaderboard (`/leaderboard`) — PRD: `files/06_LEADERBOARD.md`
-- Streaks heatmap calendar — logic exists, UI on profile not built
+- Streaks heatmap calendar — streak logic exists in backend, UI not built (goes on Profile page)
 - Analytics page (`/analytics`) — PRD: `files/08_ANALYTICS.md`
 - Profile page (`/profile`) — PRD: `files/12_PROFILE.md`
 - Achievements — PRD: `files/09_ACHIEVEMENTS.md`
