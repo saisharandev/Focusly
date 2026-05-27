@@ -33,9 +33,20 @@ export default function RoomView() {
   const currentRoomRef = useRef(id)
   const timerStartedAtRef = useRef(null)
   const timerTotalDurationRef = useRef(null)
+  // Working-time tracking for session recording
+  const workingSecondsRef = useRef(0)
+  const focusedSecondsRef = useRef(0)
+  const timerPhaseRef = useRef('IDLE')
+  const timerPausedRef = useRef(false)
+  const hasRecordedRef = useRef(false)
+  const cameraEnabledRef = useRef(false)
+  const roomSubjectRef = useRef(null)
 
   const { faceDetectedRef } = useFaceDetection(videoRef, { enabled: cameraEnabled })
   const focusStatus = !cameraEnabled ? 'untracked' : (faceDetectedRef.current ? 'focused' : 'idle')
+
+  // Keep cameraEnabledRef in sync so recordRoomSession closure reads current value
+  useEffect(() => { cameraEnabledRef.current = cameraEnabled }, [cameraEnabled])
 
   const isHost = room?.hostId?._id === user?._id || room?.hostId === user?._id
 
@@ -46,6 +57,7 @@ export default function RoomView() {
         const res = await api.get(`/api/rooms/${id}`)
         const r = res.data.room
         setRoom(r)
+        roomSubjectRef.current = r.subjectTag || null
         setMembers(r.members.map(m => ({
           userId: m._id,
           name: m.name,
@@ -61,6 +73,33 @@ export default function RoomView() {
 
     init()
   }, [id])
+
+  // recordRoomSession — fire-and-forget safe (works even after unmount)
+  async function recordRoomSession() {
+    if (hasRecordedRef.current) return
+    const workingMins = Math.round(workingSecondsRef.current / 60)
+    if (workingMins < 1) return
+    hasRecordedRef.current = true
+    try {
+      const focusScore = workingSecondsRef.current > 0
+        ? Math.round((focusedSecondsRef.current / workingSecondsRef.current) * 100)
+        : 100
+      const startRes = await api.post('/api/sessions', {
+        subject: roomSubjectRef.current || 'Study Room',
+        plannedDuration: workingMins,
+        timerMode: 'pomodoro',
+        cameraUsed: cameraEnabledRef.current,
+      })
+      await api.patch(`/api/sessions/${startRes.data.sessionId}/end`, {
+        actualDuration: workingMins,
+        focusScore,
+        distractionCount: 0,
+        status: 'completed',
+      })
+    } catch (err) {
+      console.error('Failed to record room session:', err)
+    }
+  }
 
   // Socket events
   useEffect(() => {
@@ -84,8 +123,8 @@ export default function RoomView() {
       setRoom(r => r ? { ...r, hostId: newHostId } : r)
     })
 
-    socket.on('member_status_changed', ({ userId, status }) => {
-      setMembers(prev => prev.map(m => m.userId === userId ? { ...m, status } : m))
+    socket.on('member_status_changed', ({ userId, status, focusScore }) => {
+      setMembers(prev => prev.map(m => m.userId === userId ? { ...m, status, focusScore } : m))
     })
 
     socket.on('new_message', msg => {
@@ -93,6 +132,8 @@ export default function RoomView() {
     })
 
     socket.on('timer:sync', payload => {
+      timerPhaseRef.current = payload.phase
+      timerPausedRef.current = payload.isPaused
       setTimerState(prev => ({ ...prev, ...payload }))
       // Reconstruct countdown refs from sync payload so late joiners tick correctly
       if (!payload.isPaused && payload.phase !== 'IDLE') {
@@ -104,6 +145,8 @@ export default function RoomView() {
     })
 
     socket.on('timer:started', payload => {
+      timerPhaseRef.current = payload.phase
+      timerPausedRef.current = false
       timerStartedAtRef.current = payload.startedAt
       timerTotalDurationRef.current = payload.duration
       setTimerState({
@@ -118,16 +161,20 @@ export default function RoomView() {
     })
 
     socket.on('timer:paused', ({ remainingAtPause }) => {
+      timerPausedRef.current = true
       timerStartedAtRef.current = null
       setTimerState(prev => ({ ...prev, isPaused: true, remaining: Math.round(remainingAtPause / 1000) }))
     })
 
     socket.on('timer:resumed', ({ startedAt }) => {
+      timerPausedRef.current = false
       timerStartedAtRef.current = startedAt
       setTimerState(prev => ({ ...prev, isPaused: false }))
     })
 
     socket.on('timer:skipped', payload => {
+      timerPhaseRef.current = payload.phase
+      timerPausedRef.current = false
       timerStartedAtRef.current = payload.startedAt
       timerTotalDurationRef.current = payload.duration
       setTimerState({ phase: payload.phase, remaining: Math.round(payload.duration / 1000), cycleCount: payload.cycleCount, isPaused: false })
@@ -142,6 +189,7 @@ export default function RoomView() {
 
     return () => {
       socket.emit('leave_room', id)
+      recordRoomSession() // fire-and-forget; hasRecordedRef prevents double-recording
       socket.off('member_joined')
       socket.off('member_left')
       socket.off('host_changed')
@@ -170,12 +218,28 @@ export default function RoomView() {
     return () => clearInterval(interval)
   }, [])
 
-  // Broadcast focus status every 3s — read from ref to avoid stale closure
+  // Track working seconds every 3s — reads refs, no stale closure risk
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (timerPhaseRef.current === 'WORKING' && !timerPausedRef.current) {
+        workingSecondsRef.current += 3
+        if (cameraEnabledRef.current && faceDetectedRef.current) {
+          focusedSecondsRef.current += 3
+        }
+      }
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Broadcast focus status + score every 3s — reads refs to avoid stale closures
   useEffect(() => {
     if (!socket || !room) return
     const interval = setInterval(() => {
       const status = !cameraEnabled ? 'untracked' : (faceDetectedRef.current ? 'focused' : 'idle')
-      socket.emit('focus_status_update', { roomId: id, status })
+      const focusScore = workingSecondsRef.current > 0
+        ? Math.round((focusedSecondsRef.current / workingSecondsRef.current) * 100)
+        : undefined
+      socket.emit('focus_status_update', { roomId: id, status, focusScore })
     }, 3000)
     return () => clearInterval(interval)
   }, [socket, room, id, cameraEnabled])
@@ -185,6 +249,7 @@ export default function RoomView() {
   }
 
   async function endRoom() {
+    await recordRoomSession()
     await api.delete(`/api/rooms/${id}`)
     socket?.emit('leave_room', id)
     navigate('/rooms')

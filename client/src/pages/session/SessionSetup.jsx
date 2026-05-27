@@ -20,15 +20,11 @@ export default function SessionSetup() {
 
   function handleStart() {
     if (!activeDuration || activeDuration < 1) return
-    navigate('/session/active', {
-      state: {
-        subject: subject || 'General',
-        goal,
-        duration: activeDuration,
-        timerMode,
-        cameraEnabled,
-      },
-    })
+    const sessionState = { subject: subject || 'General', goal, duration: activeDuration, timerMode, cameraEnabled }
+    sessionStorage.removeItem('activeSessionId')
+    sessionStorage.removeItem('activeSessionStart')
+    sessionStorage.setItem('activeSession', JSON.stringify(sessionState))
+    navigate('/session/active', { state: sessionState })
   }
 
   return (

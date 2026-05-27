@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Square } from 'lucide-react'
 import api from '../../lib/api'
@@ -16,46 +16,64 @@ import Button from '../../components/ui/Button'
 export default function SessionActive() {
   const location = useLocation()
   const navigate = useNavigate()
-  const state = location.state
 
-  // Guard: if navigated directly without setup
-  useEffect(() => {
-    if (!state) navigate('/session/new')
-  }, [state, navigate])
+  // Restore from sessionStorage on refresh so state survives
+  const state = useMemo(() => {
+    if (location.state) return location.state
+    try { return JSON.parse(sessionStorage.getItem('activeSession') || 'null') } catch { return null }
+  }, [])
 
-  if (!state) return null
-
-  const { subject, goal, duration, timerMode, cameraEnabled } = state
+  const { subject = '', goal = '', duration = 25, timerMode = 'pomodoro', cameraEnabled = true } = state || {}
 
   const videoRef = useRef(null)
   const sessionIdRef = useRef(null)
   const focusedSecondsRef = useRef(0)
   const totalSecondsRef = useRef(0)
   const prevFocusStateRef = useRef(null)
+  const noFaceStartRef = useRef(null)
 
-  const [focusState, setFocusState] = useState('focused')
+  const [focusState, setFocusState] = useState('idle')
   const [focusScore, setFocusScore] = useState(100)
   const [distractionCount, setDistractionCount] = useState(0)
-  const noFaceStartRef = useRef(null)
   const [isEnding, setIsEnding] = useState(false)
   const [showReport, setShowReport] = useState(false)
   const [sessionData, setSessionData] = useState(null)
 
   const sessionTimer = useSessionTimer()
-  const { faceDetectedRef, isLoaded: cameraLoaded } = useFaceDetection(videoRef, { enabled: cameraEnabled })
+  const { faceDetectedRef, isLoaded: cameraLoaded } = useFaceDetection(videoRef, { enabled: !!state && cameraEnabled })
 
-  // Start session on mount
+  // Guard: redirect if no session state at all
   useEffect(() => {
-    api.post('/api/sessions', {
-      subject,
-      goal,
-      plannedDuration: duration,
-      timerMode,
-      cameraUsed: cameraEnabled,
-    }).then(res => {
-      sessionIdRef.current = res.data.sessionId
-      sessionTimer.start()
-    }).catch(console.error)
+    if (!state) navigate('/session/new')
+  }, [state, navigate])
+
+  // Start or resume session
+  useEffect(() => {
+    if (!state) return
+
+    const storedId = sessionStorage.getItem('activeSessionId')
+    const storedStart = sessionStorage.getItem('activeSessionStart')
+
+    if (storedId && storedStart) {
+      // Resuming after refresh — reuse existing session
+      sessionIdRef.current = storedId
+      const elapsed = Math.floor((Date.now() - Number(storedStart)) / 1000)
+      sessionTimer.startFrom(Math.max(0, elapsed))
+    } else {
+      // Fresh session
+      api.post('/api/sessions', {
+        subject,
+        goal,
+        plannedDuration: duration,
+        timerMode,
+        cameraUsed: cameraEnabled,
+      }).then(res => {
+        sessionIdRef.current = res.data.sessionId
+        sessionStorage.setItem('activeSessionId', res.data.sessionId)
+        sessionStorage.setItem('activeSessionStart', String(Date.now()))
+        sessionTimer.start()
+      }).catch(console.error)
+    }
 
     return () => sessionTimer.stop()
   }, [])
@@ -99,6 +117,9 @@ export default function SessionActive() {
   async function endSession(status = 'completed') {
     if (!sessionIdRef.current || isEnding) return
     setIsEnding(true)
+    sessionStorage.removeItem('activeSession')
+    sessionStorage.removeItem('activeSessionId')
+    sessionStorage.removeItem('activeSessionStart')
 
     const actualDuration = Math.round(sessionTimer.elapsedSeconds / 60)
 
@@ -118,6 +139,8 @@ export default function SessionActive() {
   }
 
   const isPomodoro = timerMode === 'pomodoro'
+
+  if (!state) return null
 
   return (
     <div className="min-h-screen bg-bg-base flex flex-col items-center justify-center p-6 relative">

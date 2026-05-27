@@ -35,6 +35,9 @@ export default function MemberCard({ member, isHost, currentUserId, timeInRoom }
         <p className={`text-xs mt-0.5 ${styles.label}`}>
           {member.status || 'untracked'}
         </p>
+        {typeof member.focusScore === 'number' && (
+          <p className="text-xs text-text-muted mt-0.5">{member.focusScore}% focus</p>
+        )}
         {mins > 0 && (
           <p className="text-xs text-text-muted mt-0.5">{mins}m</p>
         )}

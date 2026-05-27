@@ -13,6 +13,15 @@ export default function useSessionTimer() {
     }, 1000)
   }
 
+  function startFrom(seconds) {
+    if (isRunning) return
+    setElapsedSeconds(seconds)
+    setIsRunning(true)
+    intervalRef.current = setInterval(() => {
+      setElapsedSeconds(s => s + 1)
+    }, 1000)
+  }
+
   function pause() {
     setIsRunning(false)
     clearInterval(intervalRef.current)
@@ -30,5 +39,5 @@ export default function useSessionTimer() {
 
   useEffect(() => () => clearInterval(intervalRef.current), [])
 
-  return { elapsedSeconds, isRunning, start, pause, stop, reset }
+  return { elapsedSeconds, isRunning, start, startFrom, pause, stop, reset }
 }
