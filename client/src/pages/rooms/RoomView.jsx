@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Copy, Check } from 'lucide-react'
+import { ArrowLeft, Copy, Check, Camera, CameraOff } from 'lucide-react'
 import api from '../../lib/api'
 import { useAuth } from '../../context/AuthContext'
 import { useSocket } from '../../context/SocketContext'
 import useFaceDetection from '../../hooks/useFaceDetection'
+import WebcamPreview from '../../components/session/WebcamPreview'
 import PomodoroTimer from '../../components/pomodoro/PomodoroTimer'
 import MemberGrid from '../../components/rooms/MemberGrid'
 import ChatPanel from '../../components/rooms/ChatPanel'
@@ -27,13 +28,14 @@ export default function RoomView() {
   const [chatOpen, setChatOpen] = useState(true)
   const [isLoading, setIsLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [cameraEnabled, setCameraEnabled] = useState(false)
   const joinTimeRef = useRef(Date.now())
   const currentRoomRef = useRef(id)
   const timerStartedAtRef = useRef(null)
   const timerTotalDurationRef = useRef(null)
 
-  const { faceDetected } = useFaceDetection(videoRef, { enabled: true })
-  const focusStatus = faceDetected ? 'focused' : 'idle'
+  const { faceDetectedRef } = useFaceDetection(videoRef, { enabled: cameraEnabled })
+  const focusStatus = !cameraEnabled ? 'untracked' : (faceDetectedRef.current ? 'focused' : 'idle')
 
   const isHost = room?.hostId?._id === user?._id || room?.hostId === user?._id
 
@@ -168,14 +170,15 @@ export default function RoomView() {
     return () => clearInterval(interval)
   }, [])
 
-  // Broadcast focus status every 3s
+  // Broadcast focus status every 3s — read from ref to avoid stale closure
   useEffect(() => {
     if (!socket || !room) return
     const interval = setInterval(() => {
-      socket.emit('focus_status_update', { roomId: id, status: focusStatus })
+      const status = !cameraEnabled ? 'untracked' : (faceDetectedRef.current ? 'focused' : 'idle')
+      socket.emit('focus_status_update', { roomId: id, status })
     }, 3000)
     return () => clearInterval(interval)
-  }, [socket, room, focusStatus, id])
+  }, [socket, room, id, cameraEnabled])
 
   function sendMessage(text) {
     socket?.emit('send_message', { roomId: id, text })
@@ -219,6 +222,18 @@ export default function RoomView() {
               <span className="text-xs text-text-muted hidden sm:block">{room.subjectTag}</span>
             )}
           </div>
+          <button
+            onClick={() => setCameraEnabled(c => !c)}
+            title={cameraEnabled ? 'Disable camera tracking' : 'Enable camera tracking'}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+              cameraEnabled
+                ? 'text-accent-teal border-accent-teal/40 bg-accent-teal/10'
+                : 'text-text-muted border-white/10 hover:text-text-primary'
+            }`}
+          >
+            {cameraEnabled ? <Camera size={12} /> : <CameraOff size={12} />}
+            {cameraEnabled ? 'Camera on' : 'Camera off'}
+          </button>
           <button
             onClick={copyInvite}
             className="flex items-center gap-1.5 text-xs text-text-muted hover:text-accent-teal transition-colors px-3 py-1.5 rounded-lg border border-white/10 hover:border-accent-teal/40"
@@ -272,6 +287,13 @@ export default function RoomView() {
           </div>
         </div>
       </div>
+
+      {/* Webcam preview overlay */}
+      {cameraEnabled && (
+        <div className="absolute bottom-4 left-4 z-10">
+          <WebcamPreview enabled={cameraEnabled} videoRef={videoRef} />
+        </div>
+      )}
 
       {/* Chat panel */}
       <ChatPanel
