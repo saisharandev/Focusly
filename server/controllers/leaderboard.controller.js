@@ -33,30 +33,35 @@ async function buildBoard(userIds) {
 
 function getCached(key) {
   const e = cache.get(key)
-  return e && e.exp > Date.now() ? e.data : null
+  return e && e.exp > Date.now() ? e : null
 }
-function setCached(key, data) { cache.set(key, { data, exp: Date.now() + TTL }) }
+function setCached(key, data) {
+  cache.set(key, { data, cachedAt: Date.now(), exp: Date.now() + TTL })
+}
+function respond(res, entry, data) {
+  res.json({ entries: data, cachedAt: entry?.cachedAt || Date.now() })
+}
 
 exports.getGlobal = asyncHandler(async (req, res) => {
   const cached = getCached('global')
-  if (cached) return res.json(cached)
+  if (cached) return respond(res, cached, cached.data)
   const data = await buildBoard()
   setCached('global', data)
-  res.json(data)
+  respond(res, getCached('global'), data)
 })
 
 exports.getUniversity = asyncHandler(async (req, res) => {
   const me = await User.findById(req.user.id).select('university')
-  if (!me?.university) return res.json([])
+  if (!me?.university) return res.json({ entries: [], cachedAt: Date.now() })
 
   const key = `uni:${me.university}`
   const cached = getCached(key)
-  if (cached) return res.json(cached)
+  if (cached) return respond(res, cached, cached.data)
 
   const peers = await User.find({ university: me.university }).select('_id')
   const data = await buildBoard(peers.map(u => u._id))
   setCached(key, data)
-  res.json(data)
+  respond(res, getCached(key), data)
 })
 
 exports.getFriends = asyncHandler(async (req, res) => {
@@ -65,11 +70,11 @@ exports.getFriends = asyncHandler(async (req, res) => {
 
   const key = `friends:${req.user.id}`
   const cached = getCached(key)
-  if (cached) return res.json(cached)
+  if (cached) return respond(res, cached, cached.data)
 
   const data = await buildBoard(ids)
   setCached(key, data)
-  res.json(data)
+  respond(res, getCached(key), data)
 })
 
 exports.getMe = asyncHandler(async (req, res) => {

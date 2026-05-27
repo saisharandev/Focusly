@@ -4,6 +4,7 @@ const focusHandlers = require('./focusHandlers')
 const chatHandlers = require('./chatHandlers')
 const timerHandlers = require('./timerHandlers')
 const webrtcHandlers = require('./webrtcHandlers')
+const battleHandlers = require('./battleHandlers')
 
 module.exports = function initSocket(io) {
   // roomId → { phase, duration, startedAt, cycleCount, isPaused, pausedAt, remainingAtPause, workDuration, shortBreak, longBreak }
@@ -30,5 +31,6 @@ module.exports = function initSocket(io) {
     chatHandlers(io, socket)
     timerHandlers(io, socket, roomStates)
     webrtcHandlers(io, socket)
+    battleHandlers(io, socket)
   })
 }

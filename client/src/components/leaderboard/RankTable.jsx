@@ -1,22 +1,26 @@
+import { Zap } from 'lucide-react'
 import { formatDuration } from '../../lib/utils'
 
-export default function RankTable({ entries, currentUserId }) {
+export default function RankTable({ entries, currentUserId, scope, onChallenge }) {
   if (!entries.length) return null
+
+  const showBattle = scope === 'friends' && typeof onChallenge === 'function'
 
   return (
     <div className="bg-white/5 border border-white/8 rounded-2xl overflow-hidden">
-      <div className="grid grid-cols-[3rem_1fr_auto_auto] gap-x-4 px-4 py-2.5 border-b border-white/8 text-xs text-text-muted uppercase tracking-wider">
+      <div className={`grid gap-x-4 px-4 py-2.5 border-b border-white/8 text-xs text-text-muted uppercase tracking-wider ${showBattle ? 'grid-cols-[3rem_1fr_auto_auto_auto]' : 'grid-cols-[3rem_1fr_auto_auto]'}`}>
         <span>#</span>
         <span>Name</span>
         <span className="text-right">Hours</span>
         <span className="text-right">Focus</span>
+        {showBattle && <span />}
       </div>
       {entries.map((entry, i) => {
         const isMe = entry.userId?.toString() === currentUserId
         return (
           <div
             key={entry.userId?.toString() || i}
-            className={`grid grid-cols-[3rem_1fr_auto_auto] gap-x-4 px-4 py-3 items-center border-b border-white/5 last:border-0 transition-colors ${
+            className={`grid gap-x-4 px-4 py-3 items-center border-b border-white/5 last:border-0 transition-colors ${showBattle ? 'grid-cols-[3rem_1fr_auto_auto_auto]' : 'grid-cols-[3rem_1fr_auto_auto]'} ${
               isMe ? 'bg-accent-teal/10 border-l-2 border-l-accent-teal' : 'hover:bg-white/3'
             }`}
           >
@@ -38,6 +42,19 @@ export default function RankTable({ entries, currentUserId }) {
             </div>
             <span className="text-sm text-text-secondary text-right">{formatDuration(entry.totalMinutes)}</span>
             <span className="text-sm text-text-muted text-right">{entry.avgFocus}%</span>
+            {showBattle && (
+              <div className="flex justify-end">
+                {!isMe && (
+                  <button
+                    onClick={() => onChallenge(entry.userId?.toString())}
+                    title={`Challenge ${entry.name} to a focus battle`}
+                    className="p-1.5 rounded-lg text-accent-amber hover:bg-accent-amber/15 transition-colors"
+                  >
+                    <Zap size={14} />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )
       })}

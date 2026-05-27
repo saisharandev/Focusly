@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Trophy } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useBattle } from '../context/BattleContext'
 import api from '../lib/api'
 import Podium from '../components/leaderboard/Podium'
 import RankTable from '../components/leaderboard/RankTable'
@@ -49,11 +50,13 @@ function SkeletonRow() {
 
 export default function Leaderboard() {
   const { user } = useAuth()
+  const { challengeUser } = useBattle()
   const [scope, setScope] = useState('friends')
   const [entries, setEntries] = useState([])
   const [myStats, setMyStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [cachedAt, setCachedAt] = useState(null)
 
   const fetchLeaderboard = useCallback(async (s) => {
     setLoading(true)
@@ -63,7 +66,8 @@ export default function Leaderboard() {
         api.get(`/api/leaderboard/${s}`),
         api.get('/api/leaderboard/me'),
       ])
-      setEntries(Array.isArray(boardRes.data) ? boardRes.data : [])
+      setEntries(Array.isArray(boardRes.data.entries) ? boardRes.data.entries : [])
+      setCachedAt(boardRes.data.cachedAt || null)
       setMyStats(meRes.data)
     } catch {
       setError('Failed to load leaderboard.')
@@ -91,9 +95,16 @@ export default function Leaderboard() {
           </div>
           <p className="text-sm text-text-muted">{getWeekLabel()}</p>
         </div>
-        <span className="text-xs text-text-muted bg-white/5 border border-white/8 rounded-full px-3 py-1.5">
-          {getResetCountdown()}
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-xs text-text-muted bg-white/5 border border-white/8 rounded-full px-3 py-1.5">
+            {getResetCountdown()}
+          </span>
+          {cachedAt && (
+            <span className="text-[11px] text-text-muted">
+              Updated {Math.max(0, Math.round((Date.now() - cachedAt) / 60000))} min ago
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Scope tabs */}
@@ -153,7 +164,12 @@ export default function Leaderboard() {
       {!noUniversity && !loading && entries.length > 0 && (
         <>
           <Podium entries={top3} />
-          <RankTable entries={rest} currentUserId={user?._id || user?.id} />
+          <RankTable
+            entries={rest}
+            currentUserId={user?._id || user?.id}
+            scope={scope}
+            onChallenge={challengeUser}
+          />
         </>
       )}
 

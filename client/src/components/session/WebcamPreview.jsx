@@ -46,11 +46,20 @@ export default function WebcamPreview({ enabled, onStreamReady, videoRef: extern
     }
   }, [enabled])
 
-  if (!enabled || hasPermission === false) {
+  if (!enabled) {
     return (
       <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-card border border-white/10 text-text-muted text-xs">
         <CameraOff size={14} />
         <span>Camera off</span>
+      </div>
+    )
+  }
+
+  if (hasPermission === false) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-accent-red/10 border border-accent-red/30 text-accent-red text-xs">
+        <CameraOff size={14} />
+        <span>Camera blocked — check browser permissions</span>
       </div>
     )
   }

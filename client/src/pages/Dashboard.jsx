@@ -34,8 +34,7 @@ export default function Dashboard() {
         setWeeklyData(weeklyRes.data.days)
         setActiveRooms(roomsRes.data.rooms)
         setNeglected(neglectedRes.data)
-        const hour = new Date().getHours()
-        if (hour >= 18 && statsRes.data.currentStreak > 0 && !statsRes.data.studiedToday) {
+        if (statsRes.data.currentStreak > 0 && !statsRes.data.studiedToday) {
           setStreakAtRisk(true)
         }
       } catch (err) {

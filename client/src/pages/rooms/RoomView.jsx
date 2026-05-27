@@ -172,6 +172,10 @@ export default function RoomView() {
       setMessages(prev => [...prev, msg])
     })
 
+    socket.on('chat:history', (history) => {
+      setMessages(history)
+    })
+
     socket.on('timer:sync', payload => {
       timerPhaseRef.current = payload.phase
       timerPausedRef.current = payload.isPaused
@@ -238,6 +242,7 @@ export default function RoomView() {
       socket.off('host_changed')
       socket.off('member_status_changed')
       socket.off('new_message')
+      socket.off('chat:history')
       socket.off('timer:sync')
       socket.off('timer:started')
       socket.off('timer:paused')

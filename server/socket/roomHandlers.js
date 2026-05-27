@@ -21,15 +21,18 @@ module.exports = function roomHandlers(io, socket, roomStates) {
         avatarUrl: user?.avatarUrl,
       })
 
-      // Send current timer state to the joining member
+      // Restore timer state from DB if server restarted and lost in-memory state
+      if (!roomStates.has(roomId) && room.timerState?.phase && room.timerState.phase !== 'IDLE') {
+        const ts = room.timerState.toObject ? room.timerState.toObject() : { ...room.timerState }
+        roomStates.set(roomId, ts)
+      }
+
+      // Sync timer to joining member
       const state = roomStates.get(roomId)
       if (state) {
-        let remaining
-        if (state.isPaused) {
-          remaining = state.remainingAtPause
-        } else {
-          remaining = state.duration - (Date.now() - state.startedAt)
-        }
+        const remaining = state.isPaused
+          ? state.remainingAtPause
+          : Math.max(0, state.duration - (Date.now() - state.startedAt))
         socket.emit('timer:sync', {
           phase: state.phase,
           remaining: Math.max(0, Math.round(remaining / 1000)),
@@ -39,6 +42,16 @@ module.exports = function roomHandlers(io, socket, roomStates) {
           shortBreak: state.shortBreak,
           longBreak: state.longBreak,
         })
+      }
+
+      // Send chat history to joining member
+      if (room.messages?.length > 0) {
+        socket.emit('chat:history', room.messages.map(m => ({
+          userId: m.userId?.toString(),
+          name: m.name,
+          text: m.text,
+          timestamp: m.timestamp?.toISOString(),
+        })))
       }
     } catch (err) {
       console.error('[join_room]', err)

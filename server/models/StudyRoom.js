@@ -19,6 +19,25 @@ const roomSchema = new mongoose.Schema(
     videoEnabled:{ type: Boolean, default: false },
     isActive:    { type: Boolean, default: true },
     endedAt:     { type: Date, default: null },
+    // Last 100 chat messages persisted so they survive refreshes
+    messages: [{
+      userId:    { type: mongoose.Schema.Types.ObjectId },
+      name:      { type: String },
+      text:      { type: String },
+      timestamp: { type: Date, default: Date.now },
+    }],
+    // Timer state persisted so it survives server restarts
+    timerState: {
+      phase:            { type: String, default: 'IDLE' },
+      startedAt:        { type: Number, default: null },
+      duration:         { type: Number, default: null },
+      isPaused:         { type: Boolean, default: false },
+      remainingAtPause: { type: Number, default: null },
+      cycleCount:       { type: Number, default: 0 },
+      workDuration:     { type: Number, default: 25 },
+      shortBreak:       { type: Number, default: 5 },
+      longBreak:        { type: Number, default: 15 },
+    },
   },
   { timestamps: true }
 )

@@ -206,6 +206,78 @@ function EditProfileModal({ isOpen, onClose, user, onSave }) {
   )
 }
 
+const CATEGORIES = [
+  { key: 'focus',  label: 'Focus',   color: 'text-accent-teal',   border: 'border-accent-teal/30',   bg: 'bg-accent-teal/10' },
+  { key: 'time',   label: 'Time',    color: 'text-accent-purple',  border: 'border-accent-purple/30', bg: 'bg-accent-purple/10' },
+  { key: 'streak', label: 'Streaks', color: 'text-accent-amber',   border: 'border-accent-amber/30',  bg: 'bg-accent-amber/10' },
+  { key: 'social', label: 'Social',  color: 'text-blue-400',       border: 'border-blue-400/30',      bg: 'bg-blue-400/10' },
+]
+
+function AchievementsGallery({ allAchievements, unlockedAchievements }) {
+  const unlockedMap = Object.fromEntries(unlockedAchievements.map(a => [a.code, a.unlockedAt]))
+  const total = allAchievements.length || 18
+  const unlockedCount = unlockedAchievements.length
+
+  const grouped = {}
+  CATEGORIES.forEach(c => { grouped[c.key] = [] })
+  allAchievements.forEach(ach => {
+    if (grouped[ach.category]) {
+      grouped[ach.category].push({ ...ach, isUnlocked: !!unlockedMap[ach.code], unlockedAt: unlockedMap[ach.code] || null })
+    }
+  })
+
+  return (
+    <Card className="p-5 space-y-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-text-primary">Achievements</h2>
+        <span className="text-xs text-text-muted bg-white/5 border border-white/8 rounded-full px-2.5 py-1">
+          {unlockedCount} / {total} unlocked
+        </span>
+      </div>
+
+      {CATEGORIES.map(cat => {
+        const items = grouped[cat.key] || []
+        if (!items.length) return null
+        return (
+          <div key={cat.key}>
+            <p className={`text-xs font-semibold uppercase tracking-wider mb-3 ${cat.color}`}>{cat.label}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {items.map(ach => (
+                <div
+                  key={ach.code}
+                  title={ach.isUnlocked ? `Unlocked ${new Date(ach.unlockedAt).toLocaleDateString()}` : 'Locked'}
+                  className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border text-center transition-all ${
+                    ach.isUnlocked
+                      ? `${cat.border} ${cat.bg}`
+                      : 'border-white/8 bg-white/3 opacity-40 grayscale'
+                  }`}
+                >
+                  <span className="text-2xl leading-none">{ach.icon}</span>
+                  <div>
+                    <p className={`text-xs font-semibold leading-tight ${ach.isUnlocked ? 'text-text-primary' : 'text-text-muted'}`}>
+                      {ach.name}
+                    </p>
+                    <p className="text-[10px] text-text-muted leading-tight mt-0.5">{ach.description}</p>
+                  </div>
+                  {ach.isUnlocked && ach.unlockedAt && (
+                    <p className={`text-[9px] font-medium ${cat.color}`}>
+                      {new Date(ach.unlockedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+
+      {allAchievements.length === 0 && (
+        <p className="text-sm text-text-muted text-center py-4">Complete sessions to unlock achievements.</p>
+      )}
+    </Card>
+  )
+}
+
 function ProfileSkeleton() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -235,6 +307,7 @@ export default function Profile() {
   const [data, setData] = useState(null)
   const [heatmapData, setHeatmapData] = useState([])
   const [achievements, setAchievements] = useState([])
+  const [allAchievements, setAllAchievements] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [editOpen, setEditOpen] = useState(false)
@@ -251,13 +324,15 @@ export default function Profile() {
     if (isOwn) {
       requests.push(api.get('/api/analytics/heatmap'))
       requests.push(api.get('/api/achievements/me').catch(() => ({ data: [] })))
+      requests.push(api.get('/api/achievements').catch(() => ({ data: [] })))
     }
 
     Promise.all(requests)
-      .then(([profileRes, heatmapRes, achRes]) => {
+      .then(([profileRes, heatmapRes, achRes, allAchRes]) => {
         setData(profileRes.data)
         if (heatmapRes) setHeatmapData(heatmapRes.data.days || [])
         if (achRes) setAchievements(Array.isArray(achRes.data) ? achRes.data : [])
+        if (allAchRes) setAllAchievements(Array.isArray(allAchRes.data) ? allAchRes.data : [])
       })
       .catch(() => setError('Failed to load profile.'))
       .finally(() => setLoading(false))
@@ -389,30 +464,7 @@ export default function Profile() {
         </Card>
       )}
 
-      {isOwn && (
-        <Card className="p-5">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <h2 className="text-sm font-semibold text-text-primary">Achievements</h2>
-              <p className="text-text-muted text-xs mt-0.5">{achievements.length} / 18 unlocked</p>
-            </div>
-            <div className="flex gap-1.5">
-              {achievements.slice(0, 5).map((ach, i) => (
-                <div
-                  key={ach.code || i}
-                  className="w-8 h-8 rounded-full bg-accent-teal/20 border border-accent-teal/30 flex items-center justify-center text-base"
-                  title={ach.title || ach.code}
-                >
-                  {ach.icon || ['🏆', '🔥', '⚡', '🎯', '📚'][i]}
-                </div>
-              ))}
-              {achievements.length === 0 && (
-                <p className="text-text-muted text-xs self-center">Complete sessions to unlock achievements.</p>
-              )}
-            </div>
-          </div>
-        </Card>
-      )}
+      {isOwn && <AchievementsGallery allAchievements={allAchievements} unlockedAchievements={achievements} />}
 
       {isOwn && (
         <EditProfileModal

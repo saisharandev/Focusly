@@ -1,5 +1,9 @@
 const StudyRoom = require('../models/StudyRoom')
 
+function persistState(roomId, state) {
+  StudyRoom.findByIdAndUpdate(roomId, { timerState: state }).catch(() => {})
+}
+
 module.exports = function timerHandlers(io, socket, roomStates) {
   async function isHost(roomId) {
     const room = await StudyRoom.findById(roomId).select('hostId')
@@ -11,7 +15,7 @@ module.exports = function timerHandlers(io, socket, roomStates) {
 
     const state = {
       phase: phase || 'WORKING',
-      duration: (duration || workDuration || 25) * 60 * 1000, // ms
+      duration: (duration || workDuration || 25) * 60 * 1000,
       startedAt: Date.now(),
       cycleCount: 0,
       isPaused: false,
@@ -22,6 +26,7 @@ module.exports = function timerHandlers(io, socket, roomStates) {
       longBreak: longBreak || 15,
     }
     roomStates.set(roomId, state)
+    persistState(roomId, state)
 
     io.to(roomId).emit('timer:started', {
       phase: state.phase,
@@ -44,6 +49,7 @@ module.exports = function timerHandlers(io, socket, roomStates) {
     state.remainingAtPause = Math.max(0, state.duration - elapsed)
     state.isPaused = true
     state.pausedAt = Date.now()
+    persistState(roomId, state)
 
     io.to(roomId).emit('timer:paused', { remainingAtPause: state.remainingAtPause })
   })
@@ -57,6 +63,7 @@ module.exports = function timerHandlers(io, socket, roomStates) {
     state.startedAt = Date.now() - (state.duration - state.remainingAtPause)
     state.isPaused = false
     state.pausedAt = null
+    persistState(roomId, state)
 
     io.to(roomId).emit('timer:resumed', { startedAt: state.startedAt })
   })
@@ -73,6 +80,7 @@ module.exports = function timerHandlers(io, socket, roomStates) {
     state.startedAt = Date.now()
     state.isPaused = false
     if (nextPhase.phase === 'WORKING') state.cycleCount += 1
+    persistState(roomId, state)
 
     io.to(roomId).emit('timer:skipped', {
       phase: state.phase,

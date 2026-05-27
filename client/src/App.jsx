@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { SocketProvider } from './context/SocketContext'
 import { ActiveSessionProvider } from './context/ActiveSessionContext'
+import { BattleProvider } from './context/BattleContext'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import AppLayout from './components/layout/AppLayout'
 import ErrorBoundary from './components/ui/ErrorBoundary'
@@ -18,14 +20,24 @@ import RoomView from './pages/rooms/RoomView'
 import Leaderboard from './pages/Leaderboard'
 import Analytics from './pages/Analytics'
 import Profile from './pages/Profile'
+import FocusBattle from './pages/FocusBattle'
 
 function App() {
+  useEffect(() => {
+    import('@mediapipe/tasks-vision').then(({ FilesetResolver }) => {
+      FilesetResolver.forVisionTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm'
+      ).catch(() => {})
+    }).catch(() => {})
+  }, [])
+
   return (
     <ErrorBoundary>
     <BrowserRouter>
       <AuthProvider>
         <ActiveSessionProvider>
         <SocketProvider>
+          <BattleProvider>
           <Routes>
             {/* Auth routes */}
             <Route path="/login"           element={<Login />} />
@@ -70,10 +82,16 @@ function App() {
               </ProtectedRoute>
             } />
 
+            {/* Battle — full screen, no AppLayout */}
+            <Route path="/battle/:battleId" element={
+              <ProtectedRoute><FocusBattle /></ProtectedRoute>
+            } />
+
             {/* Fallback */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
+          </BattleProvider>
         </SocketProvider>
         </ActiveSessionProvider>
       </AuthProvider>
