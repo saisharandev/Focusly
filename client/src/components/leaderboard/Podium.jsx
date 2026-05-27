@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { Zap } from 'lucide-react'
 import { formatDuration } from '../../lib/utils'
 
 const RANK_COLORS = {
@@ -9,9 +10,10 @@ const RANK_COLORS = {
 
 const PEDESTAL_HEIGHTS = { 1: 'h-20', 2: 'h-14', 3: 'h-10' }
 
-function PodiumSlot({ entry, position, delay }) {
+function PodiumSlot({ entry, position, delay, showBattle, currentUserId, onChallenge }) {
   const c = RANK_COLORS[position]
   const initials = entry?.name?.[0]?.toUpperCase() || '?'
+  const isMe = entry?.userId?.toString() === currentUserId
 
   return (
     <motion.div
@@ -30,6 +32,16 @@ function PodiumSlot({ entry, position, delay }) {
         <p className="text-text-primary text-sm font-semibold truncate max-w-[80px]">{entry?.name || '—'}</p>
         <p className="text-text-muted text-xs">{entry ? formatDuration(entry.totalMinutes) : '—'}</p>
       </div>
+      {showBattle && entry && !isMe && (
+        <button
+          onClick={() => onChallenge(entry.userId?.toString())}
+          title={`Challenge ${entry.name} to a focus battle`}
+          className="flex items-center gap-1 px-2 py-1 rounded-lg text-accent-amber hover:bg-accent-amber/15 border border-accent-amber/30 transition-colors text-[10px] font-semibold"
+        >
+          <Zap size={10} />
+          Battle
+        </button>
+      )}
       <div className={`w-full ${PEDESTAL_HEIGHTS[position]} ${c.pedestal} rounded-t-lg flex items-center justify-center`}>
         <span className={`text-lg font-bold ${c.text}`}>#{position}</span>
       </div>
@@ -37,13 +49,15 @@ function PodiumSlot({ entry, position, delay }) {
   )
 }
 
-export default function Podium({ entries }) {
+export default function Podium({ entries, scope, currentUserId, onChallenge }) {
+  const showBattle = scope === 'friends' && typeof onChallenge === 'function'
+
   return (
     <div className="bg-white/5 border border-white/8 rounded-2xl p-6">
       <div className="flex items-end gap-3">
-        <PodiumSlot entry={entries[1]} position={2} delay={0.1} />
-        <PodiumSlot entry={entries[0]} position={1} delay={0} />
-        <PodiumSlot entry={entries[2]} position={3} delay={0.2} />
+        <PodiumSlot entry={entries[1]} position={2} delay={0.1} showBattle={showBattle} currentUserId={currentUserId} onChallenge={onChallenge} />
+        <PodiumSlot entry={entries[0]} position={1} delay={0}   showBattle={showBattle} currentUserId={currentUserId} onChallenge={onChallenge} />
+        <PodiumSlot entry={entries[2]} position={3} delay={0.2} showBattle={showBattle} currentUserId={currentUserId} onChallenge={onChallenge} />
       </div>
     </div>
   )

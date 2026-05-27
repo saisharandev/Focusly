@@ -163,7 +163,7 @@ export default function Leaderboard() {
 
       {!noUniversity && !loading && entries.length > 0 && (
         <>
-          <Podium entries={top3} />
+          <Podium entries={top3} scope={scope} currentUserId={user?._id || user?.id} onChallenge={challengeUser} />
           <RankTable
             entries={rest}
             currentUserId={user?._id || user?.id}
