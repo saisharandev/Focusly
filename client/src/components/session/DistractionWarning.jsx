@@ -1,7 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Smartphone } from 'lucide-react'
 
-export default function DistractionWarning({ isVisible }) {
+export default function DistractionWarning({ isVisible, reason = 'absent' }) {
+  const isPhone = reason === 'phone'
+
   return (
     <AnimatePresence>
       {isVisible && (
@@ -13,10 +15,17 @@ export default function DistractionWarning({ isVisible }) {
           exit={{ x: 100, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         >
-          <AlertTriangle size={20} className="text-accent-red flex-shrink-0 mt-0.5" />
+          {isPhone
+            ? <Smartphone size={20} className="text-accent-red flex-shrink-0 mt-0.5" />
+            : <AlertTriangle size={20} className="text-accent-red flex-shrink-0 mt-0.5" />
+          }
           <div>
-            <p className="font-semibold text-text-primary text-sm">Hey, are you still there?</p>
-            <p className="text-text-muted text-xs mt-0.5">Get back to your session!</p>
+            <p className="font-semibold text-text-primary text-sm">
+              {isPhone ? 'Phone detected!' : 'Hey, are you still there?'}
+            </p>
+            <p className="text-text-muted text-xs mt-0.5">
+              {isPhone ? 'Put the phone down and stay focused.' : 'Get back to your session!'}
+            </p>
           </div>
         </motion.div>
       )}

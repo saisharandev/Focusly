@@ -42,7 +42,7 @@ export default function SessionActive() {
   const [newAchievements, setNewAchievements] = useState([])
 
   const sessionTimer = useSessionTimer()
-  const { faceDetectedRef, isLoaded: cameraLoaded } = useFaceDetection(videoRef, { enabled: !!state && cameraEnabled })
+  const { faceDetectedRef, phoneDetectedRef, isLoaded: cameraLoaded } = useFaceDetection(videoRef, { enabled: !!state && cameraEnabled })
 
   // Guard: redirect if no session state at all
   useEffect(() => {
@@ -88,8 +88,18 @@ export default function SessionActive() {
     }
     const interval = setInterval(() => {
       totalSecondsRef.current += 3
-      const detected = faceDetectedRef.current
-      if (detected) {
+      const phone = phoneDetectedRef.current
+      const face = faceDetectedRef.current
+
+      if (phone) {
+        // Phone in frame → immediately distracted regardless of face
+        if (prevFocusStateRef.current !== 'distracted') {
+          setDistractionCount(c => c + 1)
+        }
+        prevFocusStateRef.current = 'distracted'
+        setFocusState('phone')
+        noFaceStartRef.current = null
+      } else if (face) {
         focusedSecondsRef.current += 3
         prevFocusStateRef.current = 'focused'
         setFocusState('focused')
@@ -181,7 +191,7 @@ export default function SessionActive() {
 
       {/* Focus status bar */}
       <FocusStatus
-        status={cameraEnabled ? focusState : 'untracked'}
+        status={cameraEnabled ? (focusState === 'phone' ? 'distracted' : focusState) : 'untracked'}
         focusScore={cameraEnabled ? focusScore : undefined}
         elapsedSeconds={sessionTimer.elapsedSeconds}
         distractionCount={distractionCount}
@@ -189,7 +199,12 @@ export default function SessionActive() {
 
       {/* Webcam preview */}
       <div className="absolute bottom-6 left-6">
-        <WebcamPreview enabled={cameraEnabled} videoRef={videoRef} />
+        <WebcamPreview
+          enabled={cameraEnabled}
+          videoRef={videoRef}
+          focusState={focusState}
+          phoneDetected={focusState === 'phone'}
+        />
       </div>
 
       {/* End session button */}
@@ -206,7 +221,10 @@ export default function SessionActive() {
       </div>
 
       {/* Distraction warning */}
-      <DistractionWarning isVisible={cameraEnabled && focusState === 'distracted'} />
+      <DistractionWarning
+        isVisible={cameraEnabled && (focusState === 'distracted' || focusState === 'phone')}
+        reason={focusState === 'phone' ? 'phone' : 'absent'}
+      />
 
       {/* Session report modal */}
       <SessionReport
