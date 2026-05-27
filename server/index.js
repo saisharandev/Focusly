@@ -16,14 +16,22 @@ const initSocket      = require('./socket')
 
 const CLIENT_URL = (process.env.CLIENT_URL || '').trim()
 
+function allowedOrigin(origin, callback) {
+  if (!origin) return callback(null, true)
+  if (origin === CLIENT_URL) return callback(null, true)
+  if (origin.endsWith('.vercel.app')) return callback(null, true)
+  if (origin.includes('localhost')) return callback(null, true)
+  callback(new Error('Not allowed by CORS'))
+}
+
+const corsOptions = { origin: allowedOrigin, credentials: true }
+
 const app = express()
 const server = http.createServer(app)
-const io = new Server(server, {
-  cors: { origin: CLIENT_URL, credentials: true },
-})
+const io = new Server(server, { cors: corsOptions })
 
 // Middleware
-app.use(cors({ origin: CLIENT_URL, credentials: true }))
+app.use(cors(corsOptions))
 app.use(express.json())
 
 // Routes
