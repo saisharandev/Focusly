@@ -12,6 +12,7 @@ import FocusStatus from '../../components/session/FocusStatus'
 import DistractionWarning from '../../components/session/DistractionWarning'
 import SessionReport from '../../components/session/SessionReport'
 import Button from '../../components/ui/Button'
+import AchievementToast from '../../components/ui/AchievementToast'
 
 export default function SessionActive() {
   const location = useLocation()
@@ -38,6 +39,7 @@ export default function SessionActive() {
   const [isEnding, setIsEnding] = useState(false)
   const [showReport, setShowReport] = useState(false)
   const [sessionData, setSessionData] = useState(null)
+  const [newAchievements, setNewAchievements] = useState([])
 
   const sessionTimer = useSessionTimer()
   const { faceDetectedRef, isLoaded: cameraLoaded } = useFaceDetection(videoRef, { enabled: !!state && cameraEnabled })
@@ -131,6 +133,7 @@ export default function SessionActive() {
         status,
       })
       setSessionData(res.data.session)
+      setNewAchievements(res.data.newAchievements || [])
       setShowReport(true)
     } catch (err) {
       console.error('Failed to end session:', err)
@@ -211,6 +214,8 @@ export default function SessionActive() {
         onClose={() => setShowReport(false)}
         session={sessionData}
       />
+
+      <AchievementToast achievements={newAchievements} />
     </div>
   )
 }

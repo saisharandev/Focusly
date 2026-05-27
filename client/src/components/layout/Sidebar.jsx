@@ -12,8 +12,8 @@ const NAV_ITEMS = [
   { to: '/session/new',  label: 'Focus Session', icon: Timer },
   { to: '/rooms',        label: 'Study Rooms',  icon: Users },
   { to: '/leaderboard',  label: 'Leaderboard',  icon: Trophy },
-  { to: '/analytics',    label: 'Analytics',    icon: BarChart3, soon: true },
-  { to: '/profile',      label: 'Profile',      icon: User, soon: true },
+  { to: '/analytics',    label: 'Analytics',    icon: BarChart3 },
+  { to: '/profile',      label: 'Profile',      icon: User },
 ]
 
 function FocusDot({ status }) {

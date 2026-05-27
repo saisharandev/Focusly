@@ -1,4 +1,5 @@
 import Sidebar from './Sidebar'
+import FloatingMusicPlayer from '../music/FloatingMusicPlayer'
 
 export default function AppLayout({ children }) {
   return (
@@ -7,6 +8,7 @@ export default function AppLayout({ children }) {
       <main className="lg:ml-60 min-h-screen p-6 pt-16 lg:pt-6">
         {children}
       </main>
+      <FloatingMusicPlayer />
     </div>
   )
 }

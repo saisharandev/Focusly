@@ -28,6 +28,7 @@ exports.getStats = asyncHandler(async (req, res) => {
     currentStreak: user?.currentStreak || 0,
     avgFocusScore,
     sessionCount: sessions.length,
+    studiedToday: todayMinutes > 0,
   })
 })
 

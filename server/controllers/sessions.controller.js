@@ -3,6 +3,7 @@ const User = require('../models/User')
 const Subject = require('../models/Subject')
 const asyncHandler = require('../middleware/asyncHandler')
 const { startOfDayUTC } = require('../utils/date')
+const checkAchievements = require('../utils/checkAchievements')
 
 exports.startSession = asyncHandler(async (req, res) => {
   const { subject, goal, plannedDuration, timerMode, cameraUsed } = req.body
@@ -77,7 +78,9 @@ exports.endSession = asyncHandler(async (req, res) => {
     )
   }
 
-  res.json({ session })
+  const newAchievements = await checkAchievements(req.user.id)
+
+  res.json({ session, newAchievements })
 })
 
 exports.getHistory = asyncHandler(async (req, res) => {

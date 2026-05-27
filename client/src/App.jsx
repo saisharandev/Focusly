@@ -15,6 +15,8 @@ import RoomsBrowse from './pages/rooms/RoomsBrowse'
 import RoomCreate from './pages/rooms/RoomCreate'
 import RoomView from './pages/rooms/RoomView'
 import Leaderboard from './pages/Leaderboard'
+import Analytics from './pages/Analytics'
+import Profile from './pages/Profile'
 
 function App() {
   return (
@@ -41,6 +43,15 @@ function App() {
             } />
             <Route path="/leaderboard" element={
               <ProtectedRoute><AppLayout><Leaderboard /></AppLayout></ProtectedRoute>
+            } />
+            <Route path="/analytics" element={
+              <ProtectedRoute><AppLayout><Analytics /></AppLayout></ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>
+            } />
+            <Route path="/profile/:userId" element={
+              <ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>
             } />
             <Route path="/rooms" element={
               <ProtectedRoute><AppLayout><RoomsBrowse /></AppLayout></ProtectedRoute>
