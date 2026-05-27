@@ -6,7 +6,7 @@ const asyncHandler = require('../middleware/asyncHandler')
 const generateCode = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6)
 
 exports.createRoom = asyncHandler(async (req, res) => {
-  const { name, type, subjectTag, isPublic, maxMembers, timerMode, workDuration } = req.body
+  const { name, type, subjectTag, isPublic, maxMembers, timerMode, workDuration, videoEnabled } = req.body
   if (!name) return res.status(400).json({ message: 'Room name is required' })
 
   let inviteCode
@@ -29,6 +29,7 @@ exports.createRoom = asyncHandler(async (req, res) => {
     inviteCode,
     timerMode: timerMode || 'pomodoro',
     workDuration: workDuration || 25,
+    videoEnabled: videoEnabled === true,
   })
 
   await room.populate('members', 'name avatarUrl')
