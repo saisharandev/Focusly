@@ -64,7 +64,7 @@ function App() {
             {/* Room view has its own full-height layout */}
             <Route path="/rooms/:id" element={
               <ProtectedRoute>
-                <div className="min-h-screen bg-bg-base lg:pl-60">
+                <div className="bg-bg-base lg:pl-60">
                   <RoomView />
                 </div>
               </ProtectedRoute>

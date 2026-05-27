@@ -320,7 +320,7 @@ export default function RoomView() {
   if (!room) return null
 
   return (
-    <div className="flex h-[calc(100vh-1.5rem)] -m-6 overflow-hidden">
+    <div className="relative flex h-screen overflow-hidden">
       {/* Main panel */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
