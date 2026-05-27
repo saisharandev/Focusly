@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import AuthLayout from '../../components/layout/AuthLayout'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 import { useAuth } from '../../context/AuthContext'
 
 function PasswordStrength({ password }) {
@@ -32,7 +33,7 @@ function PasswordStrength({ password }) {
 
 export default function Signup() {
   const navigate = useNavigate()
-  const { signup } = useAuth()
+  const { signup, loginWithGoogle } = useAuth()
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', university: '' })
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
@@ -68,6 +69,15 @@ export default function Signup() {
     }
   }
 
+  async function handleGoogleCredential(credential) {
+    try {
+      await loginWithGoogle(credential)
+      navigate('/dashboard')
+    } catch {
+      setErrors({ submit: 'Google sign-in failed. Please try again.' })
+    }
+  }
+
   return (
     <AuthLayout>
       <h2 className="text-xl font-semibold text-text-primary mb-1">Create your account</h2>
@@ -93,6 +103,14 @@ export default function Signup() {
           Create Account
         </Button>
       </form>
+
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-white/10" />
+        <span className="text-xs text-text-muted">or</span>
+        <div className="flex-1 h-px bg-white/10" />
+      </div>
+
+      <GoogleSignInButton onCredential={handleGoogleCredential} />
 
       <p className="mt-5 text-center text-sm text-text-muted">
         Already have an account?{' '}

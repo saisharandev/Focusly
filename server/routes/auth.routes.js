@@ -4,6 +4,7 @@ const requireAuth = require('../middleware/requireAuth')
 
 router.post('/signup',          ctrl.signup)
 router.post('/login',           ctrl.login)
+router.post('/google',          ctrl.googleAuth)
 router.get('/me',               requireAuth, ctrl.getMe)
 router.post('/logout',          ctrl.logout)
 router.post('/forgot-password', ctrl.forgotPassword)

@@ -3,11 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import AuthLayout from '../../components/layout/AuthLayout'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 import { useAuth } from '../../context/AuthContext'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -27,6 +28,15 @@ export default function Login() {
       setError(err.response?.data?.message || 'Something went wrong')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  async function handleGoogleCredential(credential) {
+    try {
+      await loginWithGoogle(credential)
+      navigate('/dashboard')
+    } catch {
+      setError('Google sign-in failed. Please try again.')
     }
   }
 
@@ -73,6 +83,14 @@ export default function Login() {
           Sign In
         </Button>
       </form>
+
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-white/10" />
+        <span className="text-xs text-text-muted">or</span>
+        <div className="flex-1 h-px bg-white/10" />
+      </div>
+
+      <GoogleSignInButton onCredential={handleGoogleCredential} />
 
       <p className="mt-5 text-center text-sm text-text-muted">
         Don&apos;t have an account?{' '}

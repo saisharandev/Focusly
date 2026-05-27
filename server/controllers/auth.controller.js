@@ -1,8 +1,11 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
+const { OAuth2Client } = require('google-auth-library')
 const User = require('../models/User')
 const asyncHandler = require('../middleware/asyncHandler')
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 function signToken(userId) {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' })
@@ -40,7 +43,8 @@ exports.login = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findOne({ email }).select('+passwordHash')
-  const valid = user && await bcrypt.compare(password, user.passwordHash)
+  if (!user || !user.passwordHash) return res.status(401).json({ message: 'Invalid email or password' })
+  const valid = await bcrypt.compare(password, user.passwordHash)
   if (!valid) return res.status(401).json({ message: 'Invalid email or password' })
 
   user.lastActiveAt = new Date()
@@ -73,4 +77,31 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
 
   // Always return success to prevent email enumeration
   res.json({ message: 'If that email exists, a reset link was sent.' })
+})
+
+exports.googleAuth = asyncHandler(async (req, res) => {
+  const { credential } = req.body
+  if (!credential) return res.status(400).json({ message: 'credential required' })
+
+  const ticket = await googleClient.verifyIdToken({
+    idToken: credential,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  })
+  const { sub: googleId, email, name, picture } = ticket.getPayload()
+
+  let user = await User.findOne({ googleId })
+  if (!user) {
+    user = await User.findOne({ email })
+    if (user) {
+      // Link Google to existing email/password account
+      user.googleId = googleId
+      if (!user.avatarUrl) user.avatarUrl = picture
+      await user.save()
+    } else {
+      user = await User.create({ name, email, googleId, avatarUrl: picture })
+    }
+  }
+
+  const token = signToken(user._id)
+  res.json({ token, user: safeUser(user) })
 })

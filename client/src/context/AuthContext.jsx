@@ -45,6 +45,13 @@ export function AuthProvider({ children }) {
     return res.data
   }
 
+  async function loginWithGoogle(credential) {
+    const res = await api.post('/api/auth/google', { credential })
+    localStorage.setItem('focusly_token', res.data.token)
+    dispatch({ type: 'SET_USER', user: res.data.user, token: res.data.token })
+    return res.data
+  }
+
   async function logout() {
     await api.post('/api/auth/logout').catch(() => {})
     localStorage.removeItem('focusly_token')
@@ -53,7 +60,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ ...state, login, signup, logout, isAuthenticated: !!state.user }}>
+    <AuthContext.Provider value={{ ...state, login, signup, loginWithGoogle, logout, isAuthenticated: !!state.user }}>
       {children}
     </AuthContext.Provider>
   )
